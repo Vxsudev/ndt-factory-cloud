@@ -1,0 +1,31 @@
+{
+  "reference_standards": [
+    {
+      "id": "REFSTD-0001",
+      "standard_type": "xrf_energy_standard_iron",
+      "certificate_id": "CERT-REFSTD-0001-2025",
+      "valid_until": "2027-03-15",
+      "status": "valid",
+      "can_be_used_for_calibration": true,
+      "note": "Iron K-alpha standard. Certificate current."
+    },
+    {
+      "id": "REFSTD-0002",
+      "standard_type": "xrf_energy_standard_copper",
+      "certificate_id": "CERT-REFSTD-0002-2024",
+      "valid_until": "2026-01-31",
+      "status": "expired",
+      "can_be_used_for_calibration": false,
+      "note": "Copper K-alpha standard. Certificate expired 2026-01-31. HARDSTOP: cannot be used for calibration until re-certified. No override."
+    },
+    {
+      "id": "REFSTD-0003",
+      "standard_type": "xrf_energy_standard_zinc",
+      "certificate_id": null,
+      "valid_until": null,
+      "status": "missing_certificate",
+      "can_be_used_for_calibration": false,
+      "note": "Zinc K-alpha standard. No valid calibration certificate on file. HARDSTOP: cannot be used until certificate is obtained. No override."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Domain Glossary — ndt-factory-cloud
 
-**Phase:** D2 — Factory Domain Model Freeze
+**Phase:** D2A — Drift-corrected
 **Status:** FROZEN
 **Date:** 2026-06-30
 
@@ -39,8 +39,9 @@ production. It is not a general-purpose MES platform.
 
 ## Factory Unit
 
-A single AstraX/NDT handheld device moving through the production spine. A factory unit:
-- Is created at stage S-02 (UNIT_PROVISIONED).
+A single AstraX/NDT handheld device moving through the 14-stage production spine. A
+factory unit:
+- Is provisioned when an order is received by the factory (S-03).
 - Carries a placeholder serial until production serial-number policy is defined.
 - Has exactly one active production run at any time.
 - Becomes immutable upon reaching a terminal state.
@@ -53,22 +54,26 @@ serial numbers.
 ## Order
 
 A production order that authorizes the manufacture of one or more factory units.
-An order:
-- Enters the system at stage S-01 (ORDER_RECEIVED).
-- Contains the requested quantity, product variant, and customer reference.
+An order lifecycle:
+- Created externally (S-01: Order Created).
+- Approved externally (S-02: Order Approved).
+- Received by the factory system (S-03: Order Received by Factory).
 - Remains open until all its factory units reach terminal states.
 
 In v0, placeholder format: `ORDER-0001`, `ORDER-0002`, etc.
 
 ---
 
-## Genealogy Serial
+## Production Record
 
-The full record of a factory unit's identity: which parts were installed, in which
-sequence, by which operators, at what time. The genealogy serial is the audit trail
-that links a physical device to every component and production event in its history.
+The full digital record of a factory unit's production history: which parts were
+installed, in which sequence, by which actors, at what time, and what results were
+recorded at each stage. The production record is the audit trail linking a physical
+device to every component, operation, and sign-off in its production history.
 
-The genealogy serial is frozen at stage S-10 (GENEALOGY_LOCK).
+The production record is **finalized** when Quality Control (S-11) passes. After QC
+pass, the record may not be modified except by explicit corrective action under manager
+authority, which creates a new audit entry without overwriting the original.
 
 ---
 
@@ -85,7 +90,7 @@ In v0, placeholder formats: `PART-TUBE-0001`, `PART-PCB-0001`, etc.
 ## Allocation
 
 The act of reserving one or more serialized parts from inventory for a specific factory
-unit and order. Allocation occurs at stage S-03 (PARTS_ALLOCATED). A part that is
+unit and order. Allocation occurs at stage S-04 (Parts Allocated). A part that is
 allocated to one unit cannot be concurrently allocated to another.
 
 ---
@@ -93,8 +98,8 @@ allocated to one unit cannot be concurrently allocated to another.
 ## Assembly Scan
 
 The process of confirming part installation by scanning part and unit identifiers.
-Assembly scanning occurs starting at stage S-04 (ASSEMBLY_OPEN). A scan confirms
-that a specific serialized part is installed in a specific factory unit.
+Assembly scanning occurs at stage S-05 (Assembly). A scan confirms that a specific
+serialized part is installed in a specific factory unit.
 
 ---
 
@@ -102,19 +107,23 @@ that a specific serialized part is installed in a specific factory unit.
 
 A blocking condition in the production spine that prevents all subsequent stage
 advancement until explicitly resolved by an authorized actor. Hard-stops are raised
-automatically by the system (e.g., on calibration failure) or manually by operators
-and supervisors. See `docs/factory-flow-model.md` for the full list of hard-stop
-conditions and clearance authorities.
+automatically by the system or manually by supervisors. See `docs/factory-flow-model.md`
+for the complete list of hard-stop conditions and clearance authorities.
+
+A calibration hard-stop due to an invalid reference standard has **no override** —
+a valid standard must be obtained before the hard-stop can be cleared.
 
 ---
 
 ## Gate
 
-A checkpoint stage in the production spine that requires a specific pass condition
-to be met before the unit may advance. Gates enforce quality and safety requirements.
-The two gates in the v0 spine are:
-- CALIBRATION_GATE (S-07)
-- QC_SIGNOFF_GATE (S-09)
+A stage in the production spine that requires a specific pass condition to be met before
+the unit may advance. Gates enforce quality and safety requirements. The two gates in the
+canonical spine are:
+- **Calibration (S-10)** — valid calibration certificate required; reference standard
+  must be valid; max 3 attempts; hard-stop on failure.
+- **Quality Control (S-11)** — supervisor/QC inspector sign-off required; verifies
+  physical unit and digital record; QC pass finalizes production record.
 
 ---
 
@@ -128,36 +137,50 @@ manager. All rework events are recorded in the unit's production history.
 
 ## Supervisor Disposition
 
-A mandatory decision required from a supervisor when an automated gate fails or a
-hard-stop cannot be cleared by an operator. Supervisor disposition outcomes are:
-`rework`, `reject`, or `escalate`. Disposition is recorded with supervisor identity
+A mandatory decision required from a supervisor or manager when a gate fails or a
+hard-stop cannot be cleared by the immediate operator. Supervisor disposition outcomes
+are: `rework`, `reject`, or `escalate`. Disposition is recorded with actor identity
 and timestamp.
 
 ---
 
 ## Calibration Attempt
 
-A single execution of the calibration procedure on a factory unit. The system records
-attempt number, timestamp, technician identity, and result (pass/fail). A maximum of
-3 calibration attempts are permitted per production run before a supervisor disposition
-is required.
+A single execution of the calibration procedure on a factory unit. Every attempt is
+recorded: attempt number, timestamp, technician identity, result (pass/fail), and
+measurement data. A maximum of 3 calibration attempts are permitted per production run
+before a supervisor disposition is required. Passed and failed attempts are all retained
+in the production record.
+
+---
+
+## Calibration Reference Standard
+
+The physical reference instrument used during calibration to verify the unit's calibration
+parameters. Before any calibration attempt, the technician must validate the reference
+standard's certificate and expiry date. An expired or invalid reference standard raises
+an immediate hard-stop with no bypass. The reference standard check is re-run before
+each subsequent attempt.
 
 ---
 
 ## Calibration Certificate
 
 A record generated upon a successful calibration attempt that certifies the factory
-unit's calibration parameters met specification. The calibration certificate is required
-for CALIBRATION_GATE to pass. The certificate is stored in the unit's production record.
+unit's calibration parameters met specification. The calibration certificate is the
+clean pass record; it does not erase the full attempt history. The certificate is
+required for the Calibration gate (S-10) to pass.
 
 ---
 
 ## QC Sign-Off
 
-The formal approval action by a supervisor at QC_SIGNOFF_GATE (S-09), indicating that
-the factory unit has passed quality control inspection. A QC sign-off records the
-supervisor identity, timestamp, and inspection outcome. Without a QC sign-off, the unit
-cannot proceed to GENEALOGY_LOCK.
+The formal approval action by a QC inspector or supervisor at Quality Control (S-11),
+indicating that the factory unit has passed quality control inspection. A QC sign-off:
+- records actor identity, timestamp, and inspection outcome;
+- confirms physical unit matches digital record;
+- confirms all prior gates (calibration certificate) are present and valid;
+- authorizes the unit to proceed to Factory Data Backup (S-12) and the shipping path.
 
 ---
 
@@ -165,21 +188,22 @@ cannot proceed to GENEALOGY_LOCK.
 
 The act of creating cloud-side resources (credentials, device identities, storage entries)
 for a factory unit and pushing those credentials to the physical device. Cloud provisioning
-occurs at stage S-11 (CLOUD_PROVISION). In v0, this is mocked; no real cloud calls are made.
+occurs at stage S-08 (Device Provisioned with Cloud). In v0, this is mocked; no real
+cloud calls are made.
 
 ---
 
-## Cloud Backup
+## Factory Data Backup to Cloud
 
-The confirmed transfer of initial device data and configuration to cloud storage, verifying
-that the device is reachable and the cloud association is active. Cloud backup occurs at
-stage S-12 (CLOUD_BACKUP). In v0, this is mocked.
+The confirmed transfer of the unit's complete production record and initial device data
+to cloud storage, verifying that the device is reachable and the cloud association is
+active. Occurs at stage S-12 (Factory Data Backup to Cloud). In v0, this is mocked.
+S-12 cannot proceed until Quality Control (S-11) has passed.
 
 ---
 
-## Shipped Terminal State
+## Ship Terminal State
 
 The final, immutable state of a factory unit that has completed all 14 production stages
-and been authorized for shipment by a manager at stage S-13 (FINAL_REVIEW), then formally
-marked shipped at S-14 (SHIPPED). Once a unit reaches the SHIPPED terminal state, its
-production record cannot be modified under any circumstances.
+and been authorized for shipment at stage S-14 (Ship). Once a unit reaches the Ship
+terminal state, its production record cannot be modified under any circumstances.

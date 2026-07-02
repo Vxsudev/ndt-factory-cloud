@@ -95,6 +95,6 @@ When a capability touches calibration:
 - Separate tasks for: attempt recording, attempt counter check, certificate generation,
   hard-stop raise on third failure.
 
-When a capability touches genealogy lock:
-- Separate tasks for: pre-lock dependency check (QC gate status), lock action, immutability
-  enforcement on locked units.
+When a capability touches QC pass → production record finalization:
+- Separate tasks for: QC sign-off recording, post-QC guard enforcement (S-12 blocked until
+  S-11 complete), production record read-only enforcement for post-QC units.

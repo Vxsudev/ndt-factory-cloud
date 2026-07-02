@@ -59,35 +59,45 @@ builds.
 
 ---
 
-## Invariant 4 — Calibration Retry Limit
+## Invariant 4 — Calibration Retry Limit and Reference Standard
 
-**Statement:** Calibration attempts are capped at 3 per unit per production run. A third
-failed calibration attempt raises a hard-stop and triggers mandatory supervisor disposition.
-No code path may allow a fourth attempt without an explicit new calibration session
-authorized by a supervisor.
+**Statement:** Calibration (S-10) has two hard-stop conditions:
+(a) An expired or invalid calibration reference standard raises an immediate hard-stop
+    with no bypass. Supervisor must obtain a valid standard before any attempt proceeds.
+(b) Calibration attempts are capped at 3 per unit per production run. A third failed
+    attempt raises a hard-stop and triggers mandatory supervisor disposition. No code
+    path may allow a fourth attempt without an explicit new calibration cycle authorized
+    by a supervisor.
 
-**Rationale:** Calibration cap prevents operators from retrying indefinitely to force a
-pass on a defective unit.
+**Rationale:** (a) Calibration against an invalid reference standard produces invalid
+certificates — no override is acceptable. (b) The attempt cap prevents operators from
+retrying indefinitely to force a pass on a defective unit.
 
-**Constraint:** The calibration attempt counter must be stored server-side and enforced
-by the backend. The frontend may display the counter but must not influence the cap.
+**Constraint:** Both checks must be enforced server-side. The reference standard
+validation must run before each attempt. The attempt counter must be stored server-side
+and enforced by the backend. The frontend may display both but must not influence either
+check. All attempts (pass and fail) must be retained in the production record.
 
 **Status:** RATIFIED
 
 ---
 
-## Invariant 5 — Genealogy Lock Is Permanent
+## Invariant 5 — Production Record Is Finalized After QC Pass
 
-**Statement:** Once a factory unit reaches stage GENEALOGY_LOCK (S-10), its genealogy
-record is frozen and cannot be modified, appended to, or deleted by any actor or system
-process.
+**Statement:** Once a factory unit's Quality Control stage (S-11) passes and the QC
+sign-off is recorded, the unit's production record is finalized. No parts list, assembly
+scan history, firmware version, calibration record, or prior stage records may be
+modified after QC pass.
 
-**Rationale:** The genealogy serial is the legal and audit record of the device's
-production history. Post-lock modification destroys audit integrity.
+**Rationale:** The production record is the legal and audit record of the device's
+production history. Post-QC modification destroys audit integrity and breaks the
+separation between the verified record and any subsequent corrective activity.
 
-**Constraint:** If a post-lock error is discovered, a new factory unit provision (S-02)
-is required. The original locked record is retained as-is for audit purposes. No
-update endpoints may accept genealogy modifications for a locked unit.
+**Constraint:** If an error is discovered after QC pass, corrective action must be
+recorded as a new audit entry under manager authority — it must never overwrite the
+original finalized record. The unit's stage advancement to S-12 (Factory Data Backup)
+must not proceed unless S-11 is in `complete` status. Backend endpoints must reject
+production record modifications for units that have passed QC.
 
 **Status:** RATIFIED
 

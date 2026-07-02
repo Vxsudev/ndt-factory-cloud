@@ -1,0 +1,351 @@
+{
+  "stages": [
+    {
+      "id": "STAGE-01",
+      "number": 1,
+      "name": "Order created",
+      "ownership": "external_upstream",
+      "stage_type": "external",
+      "is_gate": false,
+      "is_external": true,
+      "is_separable": false,
+      "requirements": [],
+      "normal_next_stage_id": "STAGE-02",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [],
+      "authority_notes": "Created by customer on eStore. No factory authority. External to factory scope.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=1]"]
+    },
+    {
+      "id": "STAGE-02",
+      "number": 2,
+      "name": "Order approved",
+      "ownership": "external_upstream",
+      "stage_type": "external",
+      "is_gate": false,
+      "is_external": true,
+      "is_separable": false,
+      "requirements": [],
+      "normal_next_stage_id": "STAGE-03",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [],
+      "authority_notes": "Approved by sales manager. External to factory scope.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=2]"]
+    },
+    {
+      "id": "STAGE-03",
+      "number": 3,
+      "name": "Order received",
+      "ownership": "factory_core",
+      "stage_type": "core",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["ORD-1", "ORD-2", "ORD-3", "ORD-4"],
+      "normal_next_stage_id": "STAGE-04",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [
+        {
+          "type": "boundary_validation_hardstop",
+          "trigger": "missing required field OR unknown model (no recipe)",
+          "action": "reject order; report reason to upstream system",
+          "no_override": true
+        }
+      ],
+      "authority_notes": "Approved order validated at factory boundary. Invalid or unknown-model orders rejected with reason. No override.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=3]"]
+    },
+    {
+      "id": "STAGE-04",
+      "number": 4,
+      "name": "Parts allocated",
+      "ownership": "factory_core",
+      "stage_type": "core",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["ALLOC-1", "ALLOC-2", "ALLOC-3", "ALLOC-4", "ALLOC-5"],
+      "normal_next_stage_id": "STAGE-05",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [
+        {
+          "type": "reallocation",
+          "trigger": "allocated serial damaged/lost/failed-at-bench/reprioritized",
+          "action": "supervisor re-allocates replacement serial of same type; log who/when/why/old_serial/new_serial; both serials retained in genealogy",
+          "no_override": false,
+          "authority": "supervisor",
+          "automatic": false,
+          "halts_order": false
+        }
+      ],
+      "authority_notes": "Supervisor can re-allocate parts. Original and replacement both retained in genealogy. Release reason code reported to inventory module.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=4]"]
+    },
+    {
+      "id": "STAGE-05",
+      "number": 5,
+      "name": "Assembly",
+      "ownership": "factory_core",
+      "stage_type": "core",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["ASM-1", "ASM-2", "ASM-3"],
+      "normal_next_stage_id": "STAGE-06",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [
+        {
+          "type": "hardstop",
+          "trigger_cases": [
+            "wrong_part_type_for_step",
+            "wrong_or_unallocated_serial",
+            "already_used_serial",
+            "out_of_sequence",
+            "unknown_serial"
+          ],
+          "action": "block step, show clear reason",
+          "no_override": true,
+          "operator_override": false,
+          "note": "Part correctness enforced upstream by inventory operator. Bench scan is the verification gate."
+        }
+      ],
+      "authority_notes": "No operator override on assembly hardstops. Successful scan marries serial to device genealogy.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=5]"]
+    },
+    {
+      "id": "STAGE-06",
+      "number": 6,
+      "name": "Software & firmware install",
+      "ownership": "factory_core",
+      "stage_type": "core",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["SW-1", "SW-2"],
+      "normal_next_stage_id": "STAGE-07",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [],
+      "authority_notes": "Every device receives the same pinned validated factory baseline. No cloud identity yet at this stage.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=6]"]
+    },
+    {
+      "id": "STAGE-07",
+      "number": 7,
+      "name": "Software & firmware update from cloud",
+      "ownership": "factory_core",
+      "stage_type": "hard_block_dependency",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["SW-3", "SW-4", "SW-5"],
+      "normal_next_stage_id": "STAGE-08",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [
+        {
+          "type": "hardstop_cloud_dependency",
+          "trigger": "cloud unreachable",
+          "action": "hard-block all affected units until cloud connectivity returns",
+          "no_override": true,
+          "documented_management_decision": true,
+          "decision_note": "Production throughput is intentionally coupled to cloud availability at stage 7. A cloud or connectivity outage halts all affected units with no override. Chosen deliberately to guarantee every shipped unit carries the latest production SW/FW."
+        }
+      ],
+      "authority_notes": "HARD BLOCK — NO OVERRIDE. Cloud must be reachable. Documented management decision. Alert floor on block.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=7]", "Digital_Factory_Requirements.json#decisions_against_recommendation[Q8b]"]
+    },
+    {
+      "id": "STAGE-08",
+      "number": 8,
+      "name": "Cloud provisioning",
+      "ownership": "factory_core",
+      "stage_type": "core",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["PROV-1", "PROV-2", "PROV-3"],
+      "normal_next_stage_id": "STAGE-09",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [],
+      "authority_notes": "Device enrolled with cloud, issued permanent cloud identity/credentials. Cloud identity is separate from genealogy serial, rotatable, bound 1:1.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=8]"]
+    },
+    {
+      "id": "STAGE-09",
+      "number": 9,
+      "name": "Hardware checks / setup",
+      "ownership": "factory_core",
+      "stage_type": "gate",
+      "is_gate": true,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["GATE-1", "GATE-2", "HW-1", "HW-2", "MDL-1"],
+      "normal_next_stage_id": "STAGE-10",
+      "allowed_rework_stage_ids": ["STAGE-09"],
+      "hard_stop_controls": [
+        {
+          "type": "gate",
+          "pass_action": "proceed to stage 10",
+          "fail_action": "route to hardware rework, then re-enter stage 9",
+          "fail_reentry_stage_id": "STAGE-09"
+        }
+      ],
+      "authority_notes": "Configuration-driven hardware checks against the ordered model recipe. Verifies built unit matches order. Fail routes to hardware rework then re-enters stage 9.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=9]"]
+    },
+    {
+      "id": "STAGE-10",
+      "number": 10,
+      "name": "Calibration",
+      "ownership": "factory_core",
+      "stage_type": "gate",
+      "is_gate": true,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["GATE-1", "GATE-2", "CAL-1", "CAL-2", "CAL-3", "CAL-4", "CAL-5", "CAL-6"],
+      "normal_next_stage_id": "STAGE-11",
+      "allowed_rework_stage_ids": ["STAGE-09"],
+      "hard_stop_controls": [
+        {
+          "type": "hardstop",
+          "trigger": "any reference standard expired or lacking a valid certificate",
+          "action": "cannot begin or complete calibration",
+          "no_override": true
+        },
+        {
+          "type": "retry_loop",
+          "max_attempts": 3,
+          "each_attempt_recorded": true,
+          "on_pass": "record passing run on certificate; retain all attempts internally",
+          "on_cap_exceeded": "escalate to supervisor disposition"
+        },
+        {
+          "type": "disposition",
+          "authority": "supervisor",
+          "options": ["route_back_to_hardware_stage_9", "scrap_or_quarantine"],
+          "scrap_authority": "manager_tier",
+          "logged": true
+        }
+      ],
+      "calibration_metadata": {
+        "max_retry_attempts": 3,
+        "certificate_policy": "Shipped certificate shows only the valid passing run; full internal record retains all attempts.",
+        "record_captured": [
+          "reference_standards_used_with_cert_id_and_expiry",
+          "raw_readings_per_standard",
+          "resulting_coefficients_written_to_device",
+          "calibration_equipment_fixture_id",
+          "operator",
+          "timestamp",
+          "environmental_conditions",
+          "device_firmware_software_version_at_calibration"
+        ]
+      },
+      "authority_notes": "GATE. Max 3 calibration attempts. Expired standard is a hardstop with no override. On cap exceeded, supervisor must disposition (route to stage 9, or scrap). Scrap requires manager tier.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "STAGE-11",
+      "number": 11,
+      "name": "Quality Control",
+      "ownership": "factory_core",
+      "stage_type": "gate",
+      "is_gate": true,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["GATE-1", "GATE-2", "QC-1", "QC-2", "QC-3"],
+      "normal_next_stage_id": "STAGE-12",
+      "allowed_rework_stage_ids": ["STAGE-11"],
+      "hard_stop_controls": [
+        {
+          "type": "gate",
+          "fail_action": "route to QC rework/disposition, then re-enter stage 11",
+          "pass_action": "finalize record and authorize unit for stage 12 and shipping",
+          "pass_is_trigger_for": ["finalize_record", "authorize_backup", "authorize_shipping"],
+          "fail_reentry_stage_id": "STAGE-11"
+        }
+      ],
+      "qc_metadata": {
+        "separation_of_duty": true,
+        "separation_of_duty_note": "QC signer cannot be the person who did the work on that unit (RBAC-3, RBAC-4).",
+        "waivable_by": "manager_tier",
+        "waiver_logged": true,
+        "checks": [
+          "physical_cosmetic_condition",
+          "correct_labeling_and_serial",
+          "accessories_and_seals",
+          "digital_record_complete_and_consistent",
+          "genealogy_complete",
+          "calibration_certificate_generated",
+          "every_prior_required_gate_passed",
+          "required_regulatory_documents_present"
+        ],
+        "pass_finalizes_record": true
+      },
+      "authority_notes": "GATE. Final human sign-off on physical unit and complete record. Separation of duty enforced (signer != worker). Pass finalizes production record and authorizes stage 12 + shipping.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=11]"]
+    },
+    {
+      "id": "STAGE-12",
+      "number": 12,
+      "name": "Cloud backup",
+      "ownership": "factory_core",
+      "stage_type": "hard_block_dependency",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": false,
+      "requirements": ["BK-1", "BK-2"],
+      "normal_next_stage_id": "STAGE-13",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [
+        {
+          "type": "hardstop_cloud_dependency",
+          "trigger": "cloud backup cannot complete (cloud/connectivity unavailable)",
+          "action": "hard-block unit; cannot proceed to packaging/shipping until backed up",
+          "no_override": true,
+          "documented_management_decision": true,
+          "decision_note": "As at stage 7, the line is intentionally coupled to cloud availability. A device must not leave the floor until its irreplaceable record is preserved off-site. Accepted deliberately.",
+          "backed_up": ["genealogy", "calibration_record", "certificate", "test_results"]
+        }
+      ],
+      "authority_notes": "HARD BLOCK — NO OVERRIDE. Unit's complete factory record must be backed up before proceeding. Documented management decision.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=12]"]
+    },
+    {
+      "id": "STAGE-13",
+      "number": 13,
+      "name": "Package",
+      "ownership": "factory_separable",
+      "stage_type": "core",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": true,
+      "requirements": ["SHIP-1", "SHIP-3"],
+      "normal_next_stage_id": "STAGE-14",
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [],
+      "authority_notes": "Separable into a future fulfillment system. Destination, carrier, and tracking are out of scope.",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=13]"]
+    },
+    {
+      "id": "STAGE-14",
+      "number": 14,
+      "name": "Ship",
+      "ownership": "factory_separable",
+      "stage_type": "terminal",
+      "is_gate": false,
+      "is_external": false,
+      "is_separable": true,
+      "requirements": ["SHIP-1", "SHIP-2", "SHIP-3", "SHIP-4"],
+      "normal_next_stage_id": null,
+      "allowed_rework_stage_ids": [],
+      "hard_stop_controls": [],
+      "terminal_metadata": {
+        "lifecycle_end": "shipped",
+        "immutable_after_ship": true,
+        "out_of_scope": ["destination", "carrier", "tracking_number", "billing"]
+      },
+      "authority_notes": "TERMINAL. Factory lifecycle complete at shipped. Record immutable. Destination/carrier/tracking out of scope (reserved for fulfillment).",
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=14]"]
+    }
+  ]
+}

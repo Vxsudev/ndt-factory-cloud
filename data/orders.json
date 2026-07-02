@@ -1,0 +1,56 @@
+{
+  "orders": [
+    {
+      "id": "ORDER-0001",
+      "source_system": "estore",
+      "approval_status": "approved",
+      "approved_by": "USER-MGR-0001",
+      "approved_at": "2026-06-28T08:14:00Z",
+      "model_id": "MODEL-XRF-BASIC",
+      "quantity": 1,
+      "options": {
+        "extended_warranty": false,
+        "calibration_cert_required": true
+      },
+      "boundary_validation_status": "accepted",
+      "rejection_reason": null,
+      "created_at": "2026-06-28T07:55:00Z",
+      "unit_ids_provisioned": ["UNIT-0001", "UNIT-0002", "UNIT-0003", "UNIT-0004", "UNIT-0005", "UNIT-0006"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=3]"]
+    },
+    {
+      "id": "ORDER-0002",
+      "source_system": "estore",
+      "approval_status": "approved",
+      "approved_by": "USER-MGR-0001",
+      "approved_at": "2026-06-29T10:02:00Z",
+      "model_id": "MODEL-XRF-PRO",
+      "quantity": 3,
+      "options": {
+        "extended_warranty": true,
+        "calibration_cert_required": true,
+        "priority_build": true
+      },
+      "boundary_validation_status": "accepted",
+      "rejection_reason": null,
+      "created_at": "2026-06-29T09:40:00Z",
+      "unit_ids_provisioned": ["UNIT-0007"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=3]"]
+    },
+    {
+      "id": "ORDER-0003",
+      "source_system": "estore",
+      "approval_status": "approved",
+      "approved_by": "USER-MGR-0001",
+      "approved_at": "2026-06-30T06:10:00Z",
+      "model_id": "MODEL-XRF-UNKNOWN",
+      "quantity": 1,
+      "options": {},
+      "boundary_validation_status": "rejected",
+      "rejection_reason": "unknown_model_no_recipe_found",
+      "created_at": "2026-06-30T06:00:00Z",
+      "unit_ids_provisioned": [],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=3]"]
+    }
+  ]
+}

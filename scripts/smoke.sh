@@ -1,20 +1,23 @@
 #!/usr/bin/env bash
 # ndt-factory-cloud | scripts/smoke.sh
-# D0-D2 Bootstrap Smoke Verification
+# D4 Mock Data Contract Smoke Verification
 #
-# Verifies that all required D0-D2 control-layer artifacts are present.
-# This is the active verification script for the bootstrap phase.
-# Run after any agent session to confirm bootstrap integrity.
+# Verifies that the Engineering OS is installed, the adapter overlay is wired,
+# the D3 application scaffold is present, and D4 data files and verification
+# script are in place.
+# Run after any agent session to confirm repo integrity.
 
 set -euo pipefail
 
 PASS=0
 FAIL=0
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 check() {
   local desc="$1"
   local path="$2"
-  if [ -f "$path" ]; then
+  if [ -e "$path" ]; then
     echo "  PASS  $desc"
     PASS=$((PASS + 1))
   else
@@ -40,72 +43,97 @@ check_exec() {
   fi
 }
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
 echo ""
 echo "================================================================"
 echo "  ndt-factory-cloud | smoke.sh"
-echo "  D0-D2 Bootstrap Smoke Verification"
+echo "  D3 Stack Scaffold Smoke Verification"
 echo "================================================================"
 echo ""
 
-echo "  [D0] Repository Decision Lock"
-check "docs/decision-lock.md" "$REPO_ROOT/docs/decision-lock.md"
-
-echo ""
-echo "  [D1] OS Root Documents"
+echo "  [Root wrappers]"
 check "CLAUDE.md" "$REPO_ROOT/CLAUDE.md"
-check "PROJECT_BOOTSTRAP.md" "$REPO_ROOT/PROJECT_BOOTSTRAP.md"
 check "ENGINEERING_OS.md" "$REPO_ROOT/ENGINEERING_OS.md"
+check "PROJECT_BOOTSTRAP.md" "$REPO_ROOT/PROJECT_BOOTSTRAP.md"
 
 echo ""
-echo "  [D1] AI Control Layer (16 documents)"
+echo "  [Vendored OS core]"
+check "vendor/engineering-os/" "$REPO_ROOT/vendor/engineering-os"
+check "vendor/engineering-os/core-docs/" "$REPO_ROOT/vendor/engineering-os/core-docs"
+check "vendor/engineering-os/scripts/" "$REPO_ROOT/vendor/engineering-os/scripts"
+check "vendor/engineering-os/templates/" "$REPO_ROOT/vendor/engineering-os/templates"
+check "vendor/engineering-os/tests/" "$REPO_ROOT/vendor/engineering-os/tests"
+
+echo ""
+echo "  [Adapter overlay]"
+check ".engineering-os/adapter.config.sh" "$REPO_ROOT/.engineering-os/adapter.config.sh"
+check ".engineering-os/invariants/" "$REPO_ROOT/.engineering-os/invariants"
+INV_COUNT=$(ls "$REPO_ROOT/.engineering-os/invariants/"INV-*.sh 2>/dev/null | wc -l | tr -d ' ')
+echo "  INFO  $INV_COUNT invariant rules found (expect 6)"
+if [ "$INV_COUNT" -eq 6 ]; then
+  echo "  PASS  invariant count = 6"
+  PASS=$((PASS+1))
+else
+  echo "  FAIL  expected 6 invariants, found $INV_COUNT"
+  FAIL=$((FAIL+1))
+fi
+
+echo ""
+echo "  [State registry]"
+check "ai/state_registry.json" "$REPO_ROOT/ai/state_registry.json"
+
+echo ""
+echo "  [Script proxies (executable)]"
+check_exec "scripts/compile-spec.sh" "$REPO_ROOT/scripts/compile-spec.sh"
+check_exec "scripts/generate-tasks.sh" "$REPO_ROOT/scripts/generate-tasks.sh"
+check_exec "scripts/execution-supervisor.sh" "$REPO_ROOT/scripts/execution-supervisor.sh"
+check_exec "scripts/state-manager.sh" "$REPO_ROOT/scripts/state-manager.sh"
+check_exec "scripts/invariant-check.sh" "$REPO_ROOT/scripts/invariant-check.sh"
+
+echo ""
+echo "  [Factory Cloud domain docs]"
+check "docs/decision-lock.md" "$REPO_ROOT/docs/decision-lock.md"
+check "docs/factory-flow-model.md" "$REPO_ROOT/docs/factory-flow-model.md"
+check "docs/domain-glossary.md" "$REPO_ROOT/docs/domain-glossary.md"
+check "docs/d2a-model-drift-correction.md" "$REPO_ROOT/docs/d2a-model-drift-correction.md"
+
+echo ""
+echo "  [AI control layer]"
 check "ai/product-invariants.md" "$REPO_ROOT/ai/product-invariants.md"
 check "ai/runtime-contracts.md" "$REPO_ROOT/ai/runtime-contracts.md"
 check "ai/service-boundaries.md" "$REPO_ROOT/ai/service-boundaries.md"
 check "ai/coding-patterns.md" "$REPO_ROOT/ai/coding-patterns.md"
-check "ai/spec-generation.md" "$REPO_ROOT/ai/spec-generation.md"
-check "ai/spec-compiler.md" "$REPO_ROOT/ai/spec-compiler.md"
-check "ai/spec-to-task-playbook.md" "$REPO_ROOT/ai/spec-to-task-playbook.md"
-check "ai/task-generator.md" "$REPO_ROOT/ai/task-generator.md"
-check "ai/task-graph.md" "$REPO_ROOT/ai/task-graph.md"
-check "ai/execution-loop-controller.md" "$REPO_ROOT/ai/execution-loop-controller.md"
-check "ai/execution-orchestrator.md" "$REPO_ROOT/ai/execution-orchestrator.md"
-check "ai/verification-playbook.md" "$REPO_ROOT/ai/verification-playbook.md"
-check "ai/debug-playbook.md" "$REPO_ROOT/ai/debug-playbook.md"
-check "ai/repo-index.md" "$REPO_ROOT/ai/repo-index.md"
-check "ai/architecture-index.md" "$REPO_ROOT/ai/architecture-index.md"
 check "ai/engineering-journal.md" "$REPO_ROOT/ai/engineering-journal.md"
 
 echo ""
-echo "  [D1] Pipeline Scripts (executable)"
-check_exec "scripts/compile-spec.sh" "$REPO_ROOT/scripts/compile-spec.sh"
-check_exec "scripts/generate-tasks.sh" "$REPO_ROOT/scripts/generate-tasks.sh"
-check_exec "scripts/execution-supervisor.sh" "$REPO_ROOT/scripts/execution-supervisor.sh"
-check_exec "scripts/smoke.sh" "$REPO_ROOT/scripts/smoke.sh"
+echo "  [D3 scaffold (positive checks)]"
+check "frontend/" "$REPO_ROOT/frontend"
+check "backend/" "$REPO_ROOT/backend"
+check "docker-compose.yml" "$REPO_ROOT/docker-compose.yml"
+check ".env.example" "$REPO_ROOT/.env.example"
+check "README.md" "$REPO_ROOT/README.md"
+check "specs/docker-stack-scaffold.md" "$REPO_ROOT/specs/docker-stack-scaffold.md"
 
 echo ""
-echo "  [D2] Factory Domain Model"
-check "docs/factory-flow-model.md" "$REPO_ROOT/docs/factory-flow-model.md"
-check "docs/domain-glossary.md" "$REPO_ROOT/docs/domain-glossary.md"
+echo "  [D3 verification scripts (executable)]"
+check_exec "scripts/verification/001-docker-compose-config.sh" "$REPO_ROOT/scripts/verification/001-docker-compose-config.sh"
+check_exec "scripts/verification/002-backend-health.sh" "$REPO_ROOT/scripts/verification/002-backend-health.sh"
+check_exec "scripts/verification/003-frontend-reachable.sh" "$REPO_ROOT/scripts/verification/003-frontend-reachable.sh"
 
 echo ""
-echo "  [D0-D2] Negative checks (should NOT exist yet)"
-if [ -f "$REPO_ROOT/docker-compose.yml" ]; then
-  echo "  WARN  docker-compose.yml exists — D3 started?"
-else
-  echo "  OK    docker-compose.yml not present (expected)"
-fi
-if [ -d "$REPO_ROOT/frontend" ]; then
-  echo "  WARN  frontend/ exists — D3 started?"
-else
-  echo "  OK    frontend/ not present (expected)"
-fi
-if [ -d "$REPO_ROOT/backend" ]; then
-  echo "  WARN  backend/ exists — D3 started?"
-else
-  echo "  OK    backend/ not present (expected)"
-fi
+echo "  [D4 data files]"
+check "data/stages.json" "$REPO_ROOT/data/stages.json"
+check "data/orders.json" "$REPO_ROOT/data/orders.json"
+check "data/factory_units.json" "$REPO_ROOT/data/factory_units.json"
+check "data/parts.json" "$REPO_ROOT/data/parts.json"
+check "data/users.json" "$REPO_ROOT/data/users.json"
+check "data/model_recipes.json" "$REPO_ROOT/data/model_recipes.json"
+check "data/reference_standards.json" "$REPO_ROOT/data/reference_standards.json"
+check "data/events.json" "$REPO_ROOT/data/events.json"
+check "specs/mock-data-contract.md" "$REPO_ROOT/specs/mock-data-contract.md"
+
+echo ""
+echo "  [D4 verification script (executable)]"
+check_exec "scripts/verification/004-data-contract-api.sh" "$REPO_ROOT/scripts/verification/004-data-contract-api.sh"
 
 echo ""
 echo "----------------------------------------------------------------"
@@ -113,11 +141,11 @@ echo "  Results: $PASS passed, $FAIL failed"
 echo ""
 
 if [ "$FAIL" -gt 0 ]; then
-  echo "  STATUS: FAIL — D0-D2 bootstrap is incomplete"
+  echo "  STATUS: FAIL — scaffold integrity check failed"
   echo "  Fix missing artifacts before continuing."
   exit 1
 else
-  echo "  STATUS: PASS — D0-D2 bootstrap verified"
-  echo "  Ready for D3 Stack Scaffold directive."
+  echo "  STATUS: PASS — D4 mock data contract verified"
+  echo "  Run: docker compose up --build"
   exit 0
 fi

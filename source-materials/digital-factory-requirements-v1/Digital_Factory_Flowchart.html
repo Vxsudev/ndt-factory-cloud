@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Factory — Production Workflow (All Stages)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<style>
+  :root {
+    --blue: #1F4E79;
+    --lblue: #2E75B6;
+    --bg: #f7f9fc;
+    --ink: #1a2733;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    background: #fff;
+    border-bottom: 3px solid var(--lblue);
+    padding: 22px 32px;
+  }
+  header h1 { margin: 0 0 4px; color: var(--blue); font-size: 24px; }
+  header p { margin: 0; color: #5a6b7a; font-size: 14px; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    padding: 16px 32px; background: #fff;
+    border-bottom: 1px solid #e2e8f0; font-size: 13px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 16px; height: 16px; border-radius: 3px; border: 1.5px solid; display: inline-block; }
+  .sw-core   { background: #dbeafe; border-color: #2E75B6; }
+  .sw-gate   { background: #fef3c7; border-color: #d97706; }
+  .sw-stop   { background: #fee2e2; border-color: #dc2626; }
+  .sw-ext    { background: #e5e7eb; border-color: #6b7280; }
+  .sw-ok     { background: #dcfce7; border-color: #16a34a; }
+  .sw-sep    { background: #ede9fe; border-color: #7c3aed; }
+  .wrap { padding: 24px 32px 60px; overflow-x: auto; }
+  .mermaid { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; }
+  .note { padding: 0 32px 40px; font-size: 13px; color: #5a6b7a; max-width: 1000px; }
+  .note h3 { color: var(--blue); margin-bottom: 6px; }
+  .note ul { margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Digital Factory — Production Workflow</h1>
+  <p>All 14 stages with every branch: hard-stops, rework loops, cloud blocks, retry caps, and disposition paths. Companion to the Business Requirements Specification v1.0.</p>
+</header>
+
+<div class="legend">
+  <span><i class="sw sw-ext"></i> External (upstream / cloud)</span>
+  <span><i class="sw sw-core"></i> Factory core stage</span>
+  <span><i class="sw sw-gate"></i> Gate / decision (pass/fail)</span>
+  <span><i class="sw sw-stop"></i> Hard-stop / block / terminal-out</span>
+  <span><i class="sw sw-sep"></i> Supervisor / manager action</span>
+  <span><i class="sw sw-ok"></i> Terminal: shipped</span>
+</div>
+
+<div class="wrap">
+<pre class="mermaid">
+flowchart TD
+
+%% ============ UPSTREAM (EXTERNAL) ============
+S1["Stage 1<br/>Order created on eStore<br/>(customer customizes)"]:::ext
+S2["Stage 2<br/>Sales manager approves"]:::ext
+S1 --> S2 --> S3
+
+%% ============ STAGE 3: ORDER RECEIVED ============
+S3{"Stage 3<br/>Order received —<br/>validate at boundary<br/>(ORD-1,2,3)"}:::gate
+S3 -- "missing field /<br/>unknown model" --> REJ["REJECT order<br/>report reason upstream<br/>(ORD-2, ORD-3)"]:::stop
+S3 -- "valid + known model" --> S4
+
+%% ============ STAGE 4: ALLOCATION ============
+S4["Stage 4<br/>Allocate specific serials<br/>(ALLOC-1)"]:::core
+S4 --> S5
+
+%% Re-allocation branch (shared by stage 4 and stage 5)
+S4 -. "serial bad / lost /<br/>reprioritized" .-> REAL{"Supervisor<br/>re-allocate?<br/>(ALLOC-2, GP-2)"}:::sep
+REAL -- "yes: swap serial,<br/>log old+new, report<br/>reason to inventory<br/>(ALLOC-3,4,5)" --> S4
+REAL -- "no replacement<br/>available" --> HOLD["Order waits<br/>(does not auto-halt line)"]:::stop
+
+%% ============ STAGE 5: ASSEMBLY ============
+S5{"Stage 5<br/>Assembler scans each part —<br/>verify + marry serial"}:::gate
+S5 -- "HARD-STOP &times;5:<br/>wrong type / unallocated /<br/>already-used / out-of-seq /<br/>unknown (ASM-1)" --> STOP5["BLOCK step<br/>no bench override<br/>(ASM-2, GP-3)"]:::stop
+STOP5 -. "wrong / lost part &rarr;<br/>re-allocate" .-> REAL
+STOP5 -. "correct part<br/>re-presented" .-> S5
+S5 -- "all scans valid,<br/>device married (ASM-3)" --> S6
+
+%% ============ STAGE 6: SW/FW INSTALL ============
+S6["Stage 6<br/>Install pinned validated<br/>factory baseline (SW-1,2)<br/>no cloud identity yet"]:::core
+S6 --> S7
+
+%% ============ STAGE 7: SW/FW UPDATE (CLOUD HARD-BLOCK) ============
+S7{"Stage 7<br/>Confirm latest SW/FW<br/>from cloud (SW-3)"}:::gate
+S7 -- "cloud reachable:<br/>device current" --> S8
+S7 -- "cloud UNREACHABLE" --> BLK7["HARD-BLOCK<br/>unit waits, NO override<br/>(SW-4 — documented decision)"]:::stop
+BLK7 -. "cloud returns" .-> S7
+
+%% ============ STAGE 8: PROVISIONING ============
+S8["Stage 8<br/>Provision: create cloud identity —<br/>separate credential, 1:1 to serial,<br/>rotatable (PROV-1,2,3)"]:::core
+S8 --> S9
+
+%% ============ STAGE 9: HARDWARE CHECKS (GATE 1) ============
+S9{"Stage 9 — GATE 1<br/>Hardware checks vs ordered<br/>model recipe (HW-1,2 · MDL-1)"}:::gate
+S9 -- "fail / missing or<br/>unexpected hardware" --> RW9["HW rework<br/>(build / component fix)"]:::sep
+RW9 --> S9
+S9 -- "pass" --> C0
+
+%% ============ STAGE 10: CALIBRATION (GATE 2) ============
+C0{"Stage 10 — GATE 2<br/>Reference standard<br/>valid &amp; in-cert? (CAL-2,3)"}:::gate
+C0 -- "expired / no cert" --> STOP10["HARD-STOP<br/>cannot start or complete,<br/>no override (CAL-3, GP-3)"]:::stop
+STOP10 -. "valid standard loaded" .-> C0
+C0 -- "valid" --> CALrun{"Run calibration —<br/>capture full record (CAL-1)<br/>Result?"}:::gate
+CALrun -- "fail, attempts &lt; 3" --> RETRY["Retry calibration<br/>(log every attempt, CAL-4)"]:::core
+RETRY --> CALrun
+CALrun -- "fail, 3rd attempt exceeded" --> DISP{"Supervisor<br/>disposition (CAL-5)"}:::sep
+DISP -- "back to hardware" --> S9
+DISP -- "scrap / quarantine<br/>(manager tier, RBAC-1)" --> SCRAP["SCRAP / write-off<br/>unit out of flow"]:::stop
+CALrun -- "pass" --> CALok["Record passing run on<br/>certificate; keep all<br/>attempts internally (CAL-6)"]:::core
+CALok --> S11
+
+%% ============ STAGE 11: QC (GATE 3) ============
+S11{"Stage 11 — GATE 3<br/>QC: final human sign-off —<br/>physical + complete record,<br/>verify all prior gates (QC-1,2)"}:::gate
+S11 -- "fail (cosmetic /<br/>doc / record gap)" --> RW11["QC rework /<br/>disposition"]:::sep
+RW11 --> S11
+S11 -- "PASS &rarr; finalize record,<br/>authorize ship (QC-3)<br/>[separation-of-duty, RBAC-3,4]" --> S12
+
+%% ============ STAGE 12: CLOUD BACKUP (CLOUD HARD-BLOCK) ============
+S12{"Stage 12<br/>Back up full record<br/>to cloud (BK-1)"}:::gate
+S12 -- "cloud UNREACHABLE" --> BLK12["HARD-BLOCK<br/>cannot ship, NO override<br/>(BK-2 — documented decision)"]:::stop
+BLK12 -. "cloud returns" .-> S12
+S12 -- "backup confirmed" --> S13
+
+%% ============ STAGE 13-14: PACKAGE / SHIP (SEPARABLE) ============
+S13["Stage 13<br/>Package<br/>(separable / fulfillment, SHIP-3)"]:::core
+S13 --> S14
+S14["Stage 14<br/>Ship: record status, attach<br/>certificate + docs (SHIP-1)"]:::core
+S14 --> DONE["SHIPPED<br/>factory lifecycle complete<br/>(SHIP-4)"]:::ok
+
+classDef ext  fill:#e5e7eb,stroke:#6b7280,stroke-width:1.5px,color:#1a2733;
+classDef core fill:#dbeafe,stroke:#2E75B6,stroke-width:1.5px,color:#102a43;
+classDef gate fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#3a2a00;
+classDef stop fill:#fee2e2,stroke:#dc2626,stroke-width:1.5px,color:#5a0a0a;
+classDef sep  fill:#ede9fe,stroke:#7c3aed,stroke-width:1.5px,color:#2e1065;
+classDef ok   fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#052e16;
+</pre>
+</div>
+
+<div class="note">
+  <h3>Reading the diagram</h3>
+  <ul>
+    <li><b>Solid arrows</b> are the normal forward flow. <b>Dotted arrows</b> are recovery paths back into the flow (re-allocation, re-presenting a correct part, loading a valid standard, cloud returning).</li>
+    <li><b>Hard-stops (red)</b> cannot be clicked past by an operator at the bench. The two cloud hard-blocks (stages 7 and 12) have <i>no</i> override at all — a documented management decision coupling throughput to cloud availability.</li>
+    <li><b>Three independent gates</b> — hardware (9), calibration (10), QC (11) — each must be cleared to reach the next, and each routes a failure to its own disposition path.</li>
+    <li><b>Calibration (stage 10)</b> runs as: standard-validity hard-stop → run &amp; capture record → pass (clean certificate, all attempts kept) or fail → retry up to 3 → supervisor disposition (back to hardware, or scrap at manager tier).</li>
+    <li><b>Supervisor / manager actions (purple)</b> are the only override points: part re-allocation, calibration disposition, and scrap (manager tier only).</li>
+    <li><b>QC pass</b> is the single trigger that finalizes the record and authorizes shipping, subject to separation-of-duty (the signer cannot be the person who did the work, unless a manager logs a waiver).</li>
+  </ul>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "base",
+    flowchart: { curve: "basis", nodeSpacing: 45, rankSpacing: 55, useMaxWidth: true },
+    themeVariables: { fontFamily: "Arial, Helvetica, sans-serif", fontSize: "13px" }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,490 @@
+{
+  "factory_units": [
+    {
+      "id": "UNIT-0001",
+      "order_id": "ORDER-0001",
+      "model_id": "MODEL-XRF-BASIC",
+      "genealogy_serial": "SN-MOCK-0001",
+      "current_stage_id": "STAGE-05",
+      "current_stage_number": 5,
+      "current_status": "assembly_active",
+      "blocked_reason": null,
+      "block_type": null,
+      "no_override": false,
+      "assigned_operator_id": "USER-OP-0001",
+      "station_id": "BENCH-A1",
+      "part_allocations": {
+        "DETECTOR_MODULE": {
+          "part_id": "PART-0001",
+          "status": "allocated_bound",
+          "bound_at": "2026-06-29T14:30:00Z"
+        },
+        "POWER_SUPPLY": {
+          "part_id": "PART-0002",
+          "status": "allocated_unbound"
+        }
+      },
+      "genealogy": {
+        "parts_bound": ["PART-0001"],
+        "parts_allocated": ["PART-0001", "PART-0002"],
+        "build_started_at": "2026-06-29T14:00:00Z"
+      },
+      "gate_results": {},
+      "calibration_summary": {
+        "attempts": 0,
+        "max_attempts": 3,
+        "last_result": null,
+        "passed": false
+      },
+      "qc_summary": {
+        "signed_off": false,
+        "signed_by": null,
+        "signed_at": null
+      },
+      "cloud_status": {
+        "sw_update_done": false,
+        "provisioned": false,
+        "backed_up": false
+      },
+      "package_ship_status": {
+        "packaged": false,
+        "shipped": false,
+        "terminal": false
+      },
+      "event_ids": ["EVT-0001", "EVT-0002", "EVT-0003"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=5]"]
+    },
+    {
+      "id": "UNIT-0002",
+      "order_id": "ORDER-0001",
+      "model_id": "MODEL-XRF-BASIC",
+      "genealogy_serial": "SN-MOCK-0002",
+      "current_stage_id": "STAGE-07",
+      "current_stage_number": 7,
+      "current_status": "cloud_blocked",
+      "blocked_reason": "cloud_unreachable_sw_update_cannot_proceed",
+      "block_type": "hardstop_cloud_dependency",
+      "no_override": true,
+      "assigned_operator_id": null,
+      "station_id": "STATION-SW-01",
+      "part_allocations": {
+        "DETECTOR_MODULE": {
+          "part_id": "PART-0005",
+          "status": "allocated_bound",
+          "bound_at": "2026-06-29T10:00:00Z"
+        }
+      },
+      "genealogy": {
+        "parts_bound": ["PART-0005"],
+        "parts_allocated": ["PART-0005"],
+        "build_started_at": "2026-06-29T09:30:00Z",
+        "assembly_complete_at": "2026-06-29T11:00:00Z",
+        "sw_baseline_installed_at": "2026-06-29T11:30:00Z"
+      },
+      "gate_results": {},
+      "calibration_summary": {
+        "attempts": 0,
+        "max_attempts": 3,
+        "last_result": null,
+        "passed": false
+      },
+      "qc_summary": {
+        "signed_off": false,
+        "signed_by": null,
+        "signed_at": null
+      },
+      "cloud_status": {
+        "sw_update_done": false,
+        "provisioned": false,
+        "backed_up": false,
+        "block_raised_at": "2026-06-30T06:00:00Z"
+      },
+      "package_ship_status": {
+        "packaged": false,
+        "shipped": false,
+        "terminal": false
+      },
+      "event_ids": ["EVT-0004", "EVT-0005"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=7]", "Digital_Factory_Requirements.json#decisions_against_recommendation[Q8b]"]
+    },
+    {
+      "id": "UNIT-0003",
+      "order_id": "ORDER-0001",
+      "model_id": "MODEL-XRF-BASIC",
+      "genealogy_serial": "SN-MOCK-0003",
+      "current_stage_id": "STAGE-10",
+      "current_stage_number": 10,
+      "current_status": "calibration_in_progress",
+      "blocked_reason": null,
+      "block_type": null,
+      "no_override": false,
+      "assigned_operator_id": "USER-TECH-0001",
+      "station_id": "CAL-BENCH-01",
+      "part_allocations": {
+        "DETECTOR_MODULE": {
+          "part_id": "PART-0006",
+          "status": "allocated_bound",
+          "bound_at": "2026-06-28T13:00:00Z"
+        }
+      },
+      "genealogy": {
+        "parts_bound": ["PART-0006"],
+        "parts_allocated": ["PART-0006"],
+        "build_started_at": "2026-06-28T12:00:00Z",
+        "assembly_complete_at": "2026-06-28T14:00:00Z",
+        "sw_update_done_at": "2026-06-28T15:00:00Z",
+        "provisioned_at": "2026-06-28T15:30:00Z",
+        "hw_gate_passed_at": "2026-06-28T16:00:00Z"
+      },
+      "gate_results": {
+        "STAGE-09": {
+          "result": "pass",
+          "passed_at": "2026-06-28T16:00:00Z",
+          "operator": "USER-TECH-0001"
+        }
+      },
+      "calibration_summary": {
+        "attempts": 2,
+        "max_attempts": 3,
+        "last_result": "fail",
+        "passed": false,
+        "attempt_history": [
+          {
+            "attempt": 1,
+            "result": "fail",
+            "at": "2026-06-29T08:00:00Z",
+            "operator": "USER-TECH-0001",
+            "ref_std_used": "REFSTD-0001",
+            "failure_reason": "coefficient_out_of_range"
+          },
+          {
+            "attempt": 2,
+            "result": "fail",
+            "at": "2026-06-29T09:30:00Z",
+            "operator": "USER-TECH-0001",
+            "ref_std_used": "REFSTD-0001",
+            "failure_reason": "coefficient_out_of_range"
+          }
+        ]
+      },
+      "qc_summary": {
+        "signed_off": false,
+        "signed_by": null,
+        "signed_at": null
+      },
+      "cloud_status": {
+        "sw_update_done": true,
+        "provisioned": true,
+        "backed_up": false
+      },
+      "package_ship_status": {
+        "packaged": false,
+        "shipped": false,
+        "terminal": false
+      },
+      "event_ids": ["EVT-0006", "EVT-0007", "EVT-0008", "EVT-0009", "EVT-0010"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "UNIT-0004",
+      "order_id": "ORDER-0001",
+      "model_id": "MODEL-XRF-BASIC",
+      "genealogy_serial": "SN-MOCK-0004",
+      "current_stage_id": "STAGE-10",
+      "current_stage_number": 10,
+      "current_status": "calibration_cap_exceeded_awaiting_disposition",
+      "blocked_reason": "calibration_cap_exceeded_supervisor_disposition_required",
+      "block_type": "calibration_retry_cap",
+      "no_override": false,
+      "assigned_operator_id": null,
+      "station_id": "CAL-BENCH-02",
+      "part_allocations": {
+        "DETECTOR_MODULE": {
+          "part_id": "PART-0004",
+          "status": "allocated_bound",
+          "bound_at": "2026-06-28T09:00:00Z"
+        }
+      },
+      "genealogy": {
+        "parts_bound": ["PART-0004"],
+        "parts_allocated": ["PART-0004"],
+        "build_started_at": "2026-06-28T08:00:00Z",
+        "assembly_complete_at": "2026-06-28T10:00:00Z",
+        "sw_update_done_at": "2026-06-28T10:30:00Z",
+        "provisioned_at": "2026-06-28T11:00:00Z",
+        "hw_gate_passed_at": "2026-06-28T11:30:00Z"
+      },
+      "gate_results": {
+        "STAGE-09": {
+          "result": "pass",
+          "passed_at": "2026-06-28T11:30:00Z",
+          "operator": "USER-TECH-0001"
+        }
+      },
+      "calibration_summary": {
+        "attempts": 3,
+        "max_attempts": 3,
+        "last_result": "fail",
+        "passed": false,
+        "cap_exceeded": true,
+        "disposition_required_at": "2026-06-29T14:00:00Z",
+        "dispositioned_by": null,
+        "attempt_history": [
+          {
+            "attempt": 1,
+            "result": "fail",
+            "at": "2026-06-28T12:00:00Z",
+            "operator": "USER-TECH-0001",
+            "ref_std_used": "REFSTD-0001",
+            "failure_reason": "coefficient_out_of_range"
+          },
+          {
+            "attempt": 2,
+            "result": "fail",
+            "at": "2026-06-28T13:30:00Z",
+            "operator": "USER-TECH-0001",
+            "ref_std_used": "REFSTD-0001",
+            "failure_reason": "coefficient_out_of_range"
+          },
+          {
+            "attempt": 3,
+            "result": "fail",
+            "at": "2026-06-29T11:00:00Z",
+            "operator": "USER-TECH-0001",
+            "ref_std_used": "REFSTD-0001",
+            "failure_reason": "coefficient_out_of_range"
+          }
+        ]
+      },
+      "qc_summary": {
+        "signed_off": false,
+        "signed_by": null,
+        "signed_at": null
+      },
+      "cloud_status": {
+        "sw_update_done": true,
+        "provisioned": true,
+        "backed_up": false
+      },
+      "package_ship_status": {
+        "packaged": false,
+        "shipped": false,
+        "terminal": false
+      },
+      "event_ids": ["EVT-0011", "EVT-0012", "EVT-0013", "EVT-0014"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "UNIT-0005",
+      "order_id": "ORDER-0001",
+      "model_id": "MODEL-XRF-BASIC",
+      "genealogy_serial": "SN-MOCK-0005",
+      "current_stage_id": "STAGE-11",
+      "current_stage_number": 11,
+      "current_status": "ready_for_qc",
+      "blocked_reason": null,
+      "block_type": null,
+      "no_override": false,
+      "assigned_operator_id": "USER-QC-0001",
+      "station_id": "QC-DESK-01",
+      "part_allocations": {
+        "DETECTOR_MODULE": {
+          "part_id": "PART-0003",
+          "status": "allocated_bound",
+          "bound_at": "2026-06-27T14:00:00Z"
+        }
+      },
+      "genealogy": {
+        "parts_bound": ["PART-0003"],
+        "parts_allocated": ["PART-0003"],
+        "build_started_at": "2026-06-27T13:00:00Z",
+        "assembly_complete_at": "2026-06-27T15:00:00Z",
+        "sw_update_done_at": "2026-06-27T16:00:00Z",
+        "provisioned_at": "2026-06-27T16:30:00Z",
+        "hw_gate_passed_at": "2026-06-27T17:00:00Z",
+        "calibration_passed_at": "2026-06-28T09:00:00Z"
+      },
+      "gate_results": {
+        "STAGE-09": {
+          "result": "pass",
+          "passed_at": "2026-06-27T17:00:00Z",
+          "operator": "USER-TECH-0001"
+        },
+        "STAGE-10": {
+          "result": "pass",
+          "passed_at": "2026-06-28T09:00:00Z",
+          "operator": "USER-TECH-0001"
+        }
+      },
+      "calibration_summary": {
+        "attempts": 1,
+        "max_attempts": 3,
+        "last_result": "pass",
+        "passed": true,
+        "passed_at": "2026-06-28T09:00:00Z",
+        "certificate_id": "CERT-MOCK-0005"
+      },
+      "qc_summary": {
+        "signed_off": false,
+        "signed_by": null,
+        "signed_at": null
+      },
+      "cloud_status": {
+        "sw_update_done": true,
+        "provisioned": true,
+        "backed_up": false
+      },
+      "package_ship_status": {
+        "packaged": false,
+        "shipped": false,
+        "terminal": false
+      },
+      "event_ids": ["EVT-0015", "EVT-0016", "EVT-0017"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=11]"]
+    },
+    {
+      "id": "UNIT-0006",
+      "order_id": "ORDER-0001",
+      "model_id": "MODEL-XRF-BASIC",
+      "genealogy_serial": "SN-MOCK-0006",
+      "current_stage_id": "STAGE-12",
+      "current_stage_number": 12,
+      "current_status": "cloud_backup_blocked",
+      "blocked_reason": "cloud_backup_cannot_complete_connectivity_unavailable",
+      "block_type": "hardstop_cloud_dependency",
+      "no_override": true,
+      "assigned_operator_id": null,
+      "station_id": "STATION-BACKUP-01",
+      "part_allocations": {},
+      "genealogy": {
+        "parts_bound": [],
+        "parts_allocated": [],
+        "build_started_at": "2026-06-26T09:00:00Z",
+        "assembly_complete_at": "2026-06-26T11:00:00Z",
+        "sw_update_done_at": "2026-06-26T12:00:00Z",
+        "provisioned_at": "2026-06-26T12:30:00Z",
+        "hw_gate_passed_at": "2026-06-26T13:00:00Z",
+        "calibration_passed_at": "2026-06-26T15:00:00Z",
+        "qc_signed_off_at": "2026-06-27T10:00:00Z"
+      },
+      "gate_results": {
+        "STAGE-09": {
+          "result": "pass",
+          "passed_at": "2026-06-26T13:00:00Z",
+          "operator": "USER-TECH-0001"
+        },
+        "STAGE-10": {
+          "result": "pass",
+          "passed_at": "2026-06-26T15:00:00Z",
+          "operator": "USER-TECH-0001"
+        },
+        "STAGE-11": {
+          "result": "pass",
+          "passed_at": "2026-06-27T10:00:00Z",
+          "signed_by": "USER-QC-0001"
+        }
+      },
+      "calibration_summary": {
+        "attempts": 1,
+        "max_attempts": 3,
+        "last_result": "pass",
+        "passed": true,
+        "passed_at": "2026-06-26T15:00:00Z",
+        "certificate_id": "CERT-MOCK-0006"
+      },
+      "qc_summary": {
+        "signed_off": true,
+        "signed_by": "USER-QC-0001",
+        "signed_at": "2026-06-27T10:00:00Z"
+      },
+      "cloud_status": {
+        "sw_update_done": true,
+        "provisioned": true,
+        "backed_up": false,
+        "backup_block_raised_at": "2026-06-30T06:00:00Z"
+      },
+      "package_ship_status": {
+        "packaged": false,
+        "shipped": false,
+        "terminal": false
+      },
+      "event_ids": ["EVT-0018", "EVT-0019"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=12]", "Digital_Factory_Requirements.json#decisions_against_recommendation[Q8b]"]
+    },
+    {
+      "id": "UNIT-0007",
+      "order_id": "ORDER-0002",
+      "model_id": "MODEL-XRF-PRO",
+      "genealogy_serial": "SN-MOCK-0007",
+      "current_stage_id": "STAGE-14",
+      "current_stage_number": 14,
+      "current_status": "shipped",
+      "blocked_reason": null,
+      "block_type": null,
+      "no_override": false,
+      "assigned_operator_id": null,
+      "station_id": null,
+      "part_allocations": {},
+      "genealogy": {
+        "parts_bound": [],
+        "parts_allocated": [],
+        "build_started_at": "2026-06-24T08:00:00Z",
+        "assembly_complete_at": "2026-06-24T10:00:00Z",
+        "sw_update_done_at": "2026-06-24T11:00:00Z",
+        "provisioned_at": "2026-06-24T11:30:00Z",
+        "hw_gate_passed_at": "2026-06-24T12:00:00Z",
+        "calibration_passed_at": "2026-06-24T14:00:00Z",
+        "qc_signed_off_at": "2026-06-25T09:00:00Z",
+        "cloud_backup_confirmed_at": "2026-06-25T09:30:00Z",
+        "packaged_at": "2026-06-25T10:00:00Z",
+        "shipped_at": "2026-06-25T11:00:00Z"
+      },
+      "gate_results": {
+        "STAGE-09": {
+          "result": "pass",
+          "passed_at": "2026-06-24T12:00:00Z",
+          "operator": "USER-TECH-0001"
+        },
+        "STAGE-10": {
+          "result": "pass",
+          "passed_at": "2026-06-24T14:00:00Z",
+          "operator": "USER-TECH-0001"
+        },
+        "STAGE-11": {
+          "result": "pass",
+          "passed_at": "2026-06-25T09:00:00Z",
+          "signed_by": "USER-QC-0001"
+        }
+      },
+      "calibration_summary": {
+        "attempts": 1,
+        "max_attempts": 3,
+        "last_result": "pass",
+        "passed": true,
+        "passed_at": "2026-06-24T14:00:00Z",
+        "certificate_id": "CERT-MOCK-0007"
+      },
+      "qc_summary": {
+        "signed_off": true,
+        "signed_by": "USER-QC-0001",
+        "signed_at": "2026-06-25T09:00:00Z"
+      },
+      "cloud_status": {
+        "sw_update_done": true,
+        "provisioned": true,
+        "backed_up": true,
+        "backed_up_at": "2026-06-25T09:30:00Z"
+      },
+      "package_ship_status": {
+        "packaged": true,
+        "packaged_at": "2026-06-25T10:00:00Z",
+        "shipped": true,
+        "shipped_at": "2026-06-25T11:00:00Z",
+        "terminal": true,
+        "immutable": true
+      },
+      "event_ids": ["EVT-0020", "EVT-0021"],
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=14]"]
+    }
+  ]
+}

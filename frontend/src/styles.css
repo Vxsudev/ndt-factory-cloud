@@ -1,0 +1,338 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Material Design 3 CSS Token System — ndt-factory-cloud
+   Light and dark themes via [data-theme] on documentElement.
+   ============================================================ */
+
+[data-theme="light"] {
+  /* --- MD3 Surface scale --- */
+  --mds-surface:           #FAFAF7;
+  --mds-surface-low:       #F3F3EF;
+  --mds-surface-container: #EDEEE9;
+  --mds-surface-high:      #E7E8E3;
+
+  /* --- MD3 On-surface --- */
+  --mds-on-surface:         #1A1C18;
+  --mds-on-surface-variant: #43483F;
+
+  /* --- MD3 Outline --- */
+  --mds-outline:         #73796E;
+  --mds-outline-variant: #C3C8BC;
+
+  /* --- MD3 Primary --- */
+  --mds-primary:           #2B5FC4;
+  --mds-on-primary:        #FFFFFF;
+  --mds-primary-container: #D6E4FF;
+  --mds-on-primary-container: #001A45;
+
+  /* --- MD3 Error --- */
+  --mds-error:           #BA1A1A;
+  --mds-on-error:        #FFFFFF;
+  --mds-error-container: #FFDAD6;
+  --mds-on-error-container: #410002;
+
+  /* --- Factory: Gate (calibration amber) --- */
+  --factory-gate:              #7C5800;
+  --factory-on-gate:           #FFFFFF;
+  --factory-gate-container:    #FFDF9E;
+  --factory-on-gate-container: #271900;
+
+  /* --- Factory: Cloud (provisioning teal) --- */
+  --factory-cloud:              #006767;
+  --factory-on-cloud:           #FFFFFF;
+  --factory-cloud-container:    #9CF2F2;
+  --factory-on-cloud-container: #002020;
+
+  /* --- Factory: Success (green) --- */
+  --factory-success:              #1A6B2F;
+  --factory-on-success:           #FFFFFF;
+  --factory-success-container:    #9CEAB0;
+  --factory-on-success-container: #00210A;
+
+  /* --- Factory: Supervisor (purple authority) --- */
+  --factory-supervisor:              #6B0080;
+  --factory-on-supervisor:           #FFFFFF;
+  --factory-supervisor-container:    #F6D9FF;
+  --factory-on-supervisor-container: #250036;
+}
+
+[data-theme="dark"] {
+  /* --- MD3 Surface scale --- */
+  --mds-surface:           #12140F;
+  --mds-surface-low:       #1A1C18;
+  --mds-surface-container: #222520;
+  --mds-surface-high:      #2C2F2A;
+
+  /* --- MD3 On-surface --- */
+  --mds-on-surface:         #E2E3DA;
+  --mds-on-surface-variant: #C3C8BC;
+
+  /* --- MD3 Outline --- */
+  --mds-outline:         #8D9387;
+  --mds-outline-variant: #43483F;
+
+  /* --- MD3 Primary --- */
+  --mds-primary:           #A8C8FF;
+  --mds-on-primary:        #002F72;
+  --mds-primary-container: #14449E;
+  --mds-on-primary-container: #D6E4FF;
+
+  /* --- MD3 Error --- */
+  --mds-error:           #FFB4AB;
+  --mds-on-error:        #690005;
+  --mds-error-container: #93000A;
+  --mds-on-error-container: #FFDAD6;
+
+  /* --- Factory: Gate (calibration amber) --- */
+  --factory-gate:              #F5BD48;
+  --factory-on-gate:           #3E2B00;
+  --factory-gate-container:    #5A3F00;
+  --factory-on-gate-container: #FFDF9E;
+
+  /* --- Factory: Cloud (provisioning teal) --- */
+  --factory-cloud:              #4FD8D8;
+  --factory-on-cloud:           #003737;
+  --factory-cloud-container:    #004F4F;
+  --factory-on-cloud-container: #9CF2F2;
+
+  /* --- Factory: Success (green) --- */
+  --factory-success:              #81D496;
+  --factory-on-success:           #003916;
+  --factory-success-container:    #00521F;
+  --factory-on-success-container: #9CEAB0;
+
+  /* --- Factory: Supervisor (purple authority) --- */
+  --factory-supervisor:              #E9AAFF;
+  --factory-on-supervisor:           #450054;
+  --factory-supervisor-container:    #5B006D;
+  --factory-on-supervisor-container: #F6D9FF;
+}
+
+/* ============================================================
+   Semantic helper classes — surface
+   ============================================================ */
+
+.app-bg {
+  background-color: var(--mds-surface);
+  color: var(--mds-on-surface);
+}
+
+.surf {
+  background-color: var(--mds-surface);
+}
+
+.surf-low {
+  background-color: var(--mds-surface-low);
+}
+
+.surf-container {
+  background-color: var(--mds-surface-container);
+}
+
+.surf-high {
+  background-color: var(--mds-surface-high);
+}
+
+/* ============================================================
+   Semantic helper classes — text
+   ============================================================ */
+
+.t-on-surface {
+  color: var(--mds-on-surface);
+}
+
+.t-on-surface-var {
+  color: var(--mds-on-surface-variant);
+}
+
+/* ============================================================
+   Semantic helper classes — border
+   ============================================================ */
+
+.b-outline {
+  border-color: var(--mds-outline);
+}
+
+.b-outline-var {
+  border-color: var(--mds-outline-variant);
+}
+
+/* ============================================================
+   Semantic helper classes — primary
+   ============================================================ */
+
+.surf-primary {
+  background-color: var(--mds-primary-container);
+  color: var(--mds-on-primary-container);
+}
+
+.t-on-primary {
+  color: var(--mds-on-primary-container);
+}
+
+.b-primary {
+  border-color: var(--mds-primary);
+}
+
+.t-primary {
+  color: var(--mds-primary);
+}
+
+/* ============================================================
+   Semantic helper classes — error
+   ============================================================ */
+
+.surf-error {
+  background-color: var(--mds-error-container);
+  color: var(--mds-on-error-container);
+}
+
+.t-on-error {
+  color: var(--mds-on-error-container);
+}
+
+.b-error {
+  border-color: var(--mds-error);
+}
+
+/* ============================================================
+   Hover surface helpers (for table rows and list items)
+   ============================================================ */
+
+.hover-surf-low:hover {
+  background-color: var(--mds-surface-low);
+}
+
+.hover-surf-container:hover {
+  background-color: var(--mds-surface-container);
+}
+
+/* ============================================================
+   Semantic helper classes — factory role colors
+   ============================================================ */
+
+.surf-gate {
+  background-color: var(--factory-gate-container);
+  color: var(--factory-on-gate-container);
+}
+
+.t-on-gate {
+  color: var(--factory-on-gate-container);
+}
+
+.b-gate {
+  border-color: var(--factory-gate);
+}
+
+.surf-cloud {
+  background-color: var(--factory-cloud-container);
+  color: var(--factory-on-cloud-container);
+}
+
+.t-on-cloud {
+  color: var(--factory-on-cloud-container);
+}
+
+.b-cloud {
+  border-color: var(--factory-cloud);
+}
+
+.surf-success {
+  background-color: var(--factory-success-container);
+  color: var(--factory-on-success-container);
+}
+
+.t-on-success {
+  color: var(--factory-on-success-container);
+}
+
+.b-success {
+  border-color: var(--factory-success);
+}
+
+.surf-supervisor {
+  background-color: var(--factory-supervisor-container);
+  color: var(--factory-on-supervisor-container);
+}
+
+.t-on-supervisor {
+  color: var(--factory-on-supervisor-container);
+}
+
+.b-supervisor {
+  border-color: var(--factory-supervisor);
+}
+
+/* ============================================================
+   MDC component primitives
+   ============================================================ */
+
+.mdc-card {
+  background-color: var(--mds-surface-container);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.mdc-card-container {
+  background-color: var(--mds-surface-high);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.mdc-input {
+  background-color: var(--mds-surface-low);
+  border: 1px solid var(--mds-outline-variant);
+  border-radius: 4px;
+  color: var(--mds-on-surface);
+  padding: 12px 14px;
+  min-height: 48px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.mdc-input:focus {
+  outline: 2px solid var(--mds-primary);
+  outline-offset: -1px;
+  border-color: var(--mds-primary);
+}
+
+.mdc-select {
+  background-color: var(--mds-surface-low);
+  border: 1px solid var(--mds-outline-variant);
+  border-radius: 4px;
+  color: var(--mds-on-surface);
+  padding: 12px 14px;
+  min-height: 48px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.mdc-select:focus {
+  outline: 2px solid var(--mds-primary);
+  outline-offset: -1px;
+  border-color: var(--mds-primary);
+}
+
+.mdc-divider {
+  border: none;
+  border-top: 1px solid var(--mds-outline-variant);
+}
+
+/* ============================================================
+   D8C — Touch-target utilities (additive; layout only, no new
+   colors or tokens — reuse the existing theme system)
+   ============================================================ */
+
+.touch-target-primary {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.touch-target-secondary {
+  min-height: 44px;
+  min-width: 44px;
+}

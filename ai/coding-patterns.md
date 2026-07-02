@@ -17,13 +17,14 @@ defined here, the agent must stop and propose a pattern amendment.
 
 ```
 backend/app/routers/
-├── orders.py        — order intake and management
-├── units.py         — factory unit CRUD and stage queries
-├── stages.py        — stage advancement, hard-stop management
-├── calibration.py   — calibration attempt recording and certificate management
-├── qc.py            — QC inspection and sign-off
-├── genealogy.py     — genealogy lock and read
-└── cloud.py         — cloud provision and backup (mocked in v0)
+├── orders.py        — S-01/S-02/S-03 order lifecycle
+├── units.py         — factory unit CRUD and stage history queries
+├── stages.py        — stage advancement engine, hard-stop management
+├── firmware.py      — S-06 firmware install, S-07 firmware update from cloud
+├── cloud.py         — S-08 device provisioning with cloud (mocked in v0)
+├── calibration.py   — S-10 reference standard check, attempt recording, certificate
+├── qc.py            — S-11 QC inspection and sign-off
+└── backup.py        — S-12 factory data backup to cloud (mocked in v0)
 ```
 
 Each router file owns one resource domain. Cross-resource operations route
@@ -126,20 +127,24 @@ POST   /api/orders                      — create order (S-01)
 GET    /api/orders/{order_id}           — get order detail
 
 GET    /api/units                       — list units
-POST   /api/units                       — provision unit (S-02)
+POST   /api/units                       — provision unit (S-03 factory receipt)
 GET    /api/units/{unit_id}             — get unit with full stage history
 POST   /api/units/{unit_id}/advance     — advance to next stage
 POST   /api/units/{unit_id}/hard-stop   — raise hard-stop
 POST   /api/units/{unit_id}/resolve     — resolve hard-stop (supervisor+)
 
-POST   /api/units/{unit_id}/calibration — record calibration attempt (S-06)
-POST   /api/units/{unit_id}/qc-signoff  — QC sign-off (S-09, supervisor+)
+POST   /api/orders/{order_id}/approve   — approve order (S-02, management+)
+POST   /api/orders/{order_id}/receive   — factory receipt (S-03)
+
+POST   /api/units/{unit_id}/calibration            — record calibration attempt (S-10)
+POST   /api/units/{unit_id}/calibration/reference  — validate reference standard (S-10 pre-check)
+POST   /api/units/{unit_id}/qc-signoff             — QC sign-off (S-11, supervisor+)
 ```
 
 ### Factory Domain Verbs
 
 Use factory domain language in API paths and function names.
-Prefer: `provision`, `allocate`, `scan`, `advance`, `lock`, `ship`.
+Prefer: `provision`, `allocate`, `scan`, `advance`, `ship`, `approve`, `receive`, `install`, `validate`.
 Avoid generic CRUD verbs where domain verbs exist.
 
 ---
@@ -164,11 +169,12 @@ store interface is preserved and implementations are swapped behind it.
 
 ## Naming Conventions
 
-| Concept          | Backend (Python)          | Frontend (TypeScript)  |
-|------------------|---------------------------|------------------------|
-| Factory unit     | `factory_unit`            | `factoryUnit`          |
-| Stage ID         | `CALIBRATION_GATE`        | `"CALIBRATION_GATE"`   |
-| Hard-stop        | `hard_stop`               | `hardStop`             |
-| Calibration cert | `calibration_certificate` | `calibrationCertificate` |
-| QC sign-off      | `qc_signoff`              | `qcSignoff`            |
-| Genealogy lock   | `genealogy_lock`          | `genealogyLock`        |
+| Concept                | Backend (Python)              | Frontend (TypeScript)         |
+|------------------------|-------------------------------|-------------------------------|
+| Factory unit           | `factory_unit`                | `factoryUnit`                 |
+| Stage ID (example)     | `"CALIBRATION"`               | `"CALIBRATION"`               |
+| Hard-stop              | `hard_stop`                   | `hardStop`                    |
+| Calibration cert       | `calibration_certificate`     | `calibrationCertificate`      |
+| Reference standard     | `calibration_reference_standard` | `calibrationReferenceStandard` |
+| QC sign-off            | `qc_signoff`                  | `qcSignoff`                   |
+| Production record      | `production_record`           | `productionRecord`            |

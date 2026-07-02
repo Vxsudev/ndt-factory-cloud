@@ -1,0 +1,71 @@
+{
+  "users": [
+    {
+      "id": "USER-OP-0001",
+      "name": "Alex Operator",
+      "roles": ["assembler"],
+      "authority_tier": "operator",
+      "can_perform_stages": ["STAGE-03", "STAGE-04", "STAGE-05", "STAGE-06"],
+      "can_override": false,
+      "can_qc_signoff": false,
+      "can_waive_separation_of_duty": false
+    },
+    {
+      "id": "USER-OP-0002",
+      "name": "Blake Operator",
+      "roles": ["assembler", "inventory_op"],
+      "authority_tier": "operator",
+      "can_perform_stages": ["STAGE-03", "STAGE-04", "STAGE-05", "STAGE-06"],
+      "can_override": false,
+      "can_qc_signoff": false,
+      "can_waive_separation_of_duty": false,
+      "note": "Multi-role: handles both assembly and inventory allocation tasks"
+    },
+    {
+      "id": "USER-SUP-0001",
+      "name": "Casey Supervisor",
+      "roles": ["supervisor"],
+      "authority_tier": "supervisor",
+      "can_perform_stages": ["STAGE-03", "STAGE-04", "STAGE-05", "STAGE-06", "STAGE-07", "STAGE-08", "STAGE-09", "STAGE-10", "STAGE-11", "STAGE-12", "STAGE-13"],
+      "can_override": true,
+      "can_qc_signoff": false,
+      "can_waive_separation_of_duty": false,
+      "disposition_authority": ["route_to_hardware_rework", "route_back_to_stage_9", "quarantine"],
+      "note": "Can disposition calibration cap exceeded units. Cannot scrap (manager tier required)."
+    },
+    {
+      "id": "USER-MGR-0001",
+      "name": "Dana Manager",
+      "roles": ["manager"],
+      "authority_tier": "manager",
+      "can_perform_stages": ["STAGE-01", "STAGE-02", "STAGE-03", "STAGE-04", "STAGE-05", "STAGE-06", "STAGE-07", "STAGE-08", "STAGE-09", "STAGE-10", "STAGE-11", "STAGE-12", "STAGE-13", "STAGE-14"],
+      "can_override": true,
+      "can_qc_signoff": false,
+      "can_waive_separation_of_duty": true,
+      "disposition_authority": ["route_to_hardware_rework", "route_back_to_stage_9", "quarantine", "scrap"],
+      "note": "Manager tier. Can approve orders (external), waive separation-of-duty (logged), and authorize scrap."
+    },
+    {
+      "id": "USER-QC-0001",
+      "name": "Ellis QC",
+      "roles": ["qc_inspector"],
+      "authority_tier": "operator",
+      "can_perform_stages": ["STAGE-11"],
+      "can_override": false,
+      "can_qc_signoff": true,
+      "can_waive_separation_of_duty": false,
+      "note": "QC sign-off authority. Cannot sign off on a unit they also worked on (separation-of-duty, RBAC-3/RBAC-4)."
+    },
+    {
+      "id": "USER-TECH-0001",
+      "name": "Finley Technician",
+      "roles": ["assembler", "calibration_tech"],
+      "authority_tier": "operator",
+      "can_perform_stages": ["STAGE-05", "STAGE-06", "STAGE-07", "STAGE-08", "STAGE-09", "STAGE-10"],
+      "can_override": false,
+      "can_qc_signoff": false,
+      "can_waive_separation_of_duty": false,
+      "note": "Multi-role: performs assembly and calibration. Cannot QC-sign units they assembled or calibrated."
+    }
+  ]
+}

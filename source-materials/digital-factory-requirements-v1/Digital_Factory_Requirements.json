@@ -1,0 +1,410 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "document": {
+    "title": "Digital Factory — Business Requirements Specification",
+    "product": "XRF Handheld Device Production",
+    "version": "1.0",
+    "status": "draft-for-specification",
+    "date": "2026-06-16",
+    "author_role": "Manufacturing / Factory Management",
+    "audience": "Software Engineering Team",
+    "language_note": "Requirements are stated as business rules in operational language, to be converted by engineering into technical specifications. Preferences expressed are business rules, not design instructions."
+  },
+  "system": {
+    "type": "MES",
+    "description": "Manufacturing Execution System with full per-unit traceability built in from day one. System of record for what was built, how, by whom, and whether it is fit to ship.",
+    "out_of_scope_v1": ["digital_twin", "line_layout_simulation", "throughput_modeling"],
+    "scope_boundary": {
+      "owned_core_stages": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "owned_separable_stages": [13, 14],
+      "external_systems": ["eStore", "sales_approval", "cloud_platform", "inventory_management_module"]
+    },
+    "scale": {
+      "initial_target_per_day": 10,
+      "designed_to_scale_per_day": 100,
+      "concurrency": "multiple units, stations, and operators simultaneously"
+    }
+  },
+  "principles": [
+    {"id": "GP-1", "statement": "The order is the authoritative definition of what a unit should be; allocation, assembly verification, and gates 9-11 validate the built unit against its order.", "rationale": "Single source of truth prevents the gates from disagreeing."},
+    {"id": "GP-2", "statement": "Strict by default; controlled override only at the right authority level; always logged with who/when/why."},
+    {"id": "GP-3", "statement": "Hard-stops cannot be clicked past by operators. A blocked step shows a clear reason and cannot proceed at the bench."},
+    {"id": "GP-4", "statement": "Every override, authorization, waiver, re-allocation, and gate result carries the role-holder identity and is retained in the unit's permanent record.", "rationale": "Makes role tiers meaningful and the record auditable."},
+    {"id": "GP-5", "statement": "The system must be extensible without re-engineering for new serial-worthy sub-assembly types and new device model recipes; adding either is a configuration/data action, not a code change."},
+    {"id": "GP-6", "statement": "The unit's permanent record (genealogy, calibration certificate, gate results, full history) is the irreplaceable artifact of a regulated instrument and must be protected accordingly."}
+  ],
+  "tracked_unit": {
+    "unit_of_work": "individual device plus its serial-worthy sub-assemblies, married into a single final device serial (the genealogy serial)",
+    "serial_worthy_subassemblies": ["x_ray_tube", "detector", "dpp", "som", "mcb_carrier_board", "battery_pack", "bms_board", "chassis"],
+    "subassembly_list_extensible": true,
+    "serial_lot_ownership": "Inventory Management module (external); factory consumes/binds serial+lot across an interface and does not own the inventory record",
+    "requirements": ["UNIT-1", "UNIT-2", "UNIT-3"]
+  },
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Order created",
+      "ownership": "external_upstream",
+      "description": "Customer customizes and orders the device on the eStore."
+    },
+    {
+      "stage": 2,
+      "name": "Order approved",
+      "ownership": "external_upstream",
+      "description": "Sales manager approves the order."
+    },
+    {
+      "stage": 3,
+      "name": "Order received",
+      "ownership": "factory_core",
+      "description": "Approved order handed to the factory and validated at the boundary before admission.",
+      "requirements": ["ORD-1", "ORD-2", "ORD-3", "ORD-4"],
+      "controls": [
+        {
+          "type": "boundary_validation_hardstop",
+          "trigger": "missing required field OR unknown model (no recipe)",
+          "action": "reject order; report reason to upstream system",
+          "override": "none"
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "name": "Parts allocated",
+      "ownership": "factory_core",
+      "description": "Specific serial numbers reserved for the order; inventory operator delivers those exact units.",
+      "allocation_method": "serial_level",
+      "requirements": ["ALLOC-1", "ALLOC-2", "ALLOC-3", "ALLOC-4", "ALLOC-5"],
+      "controls": [
+        {
+          "type": "reallocation",
+          "trigger": "allocated serial damaged/lost/failed-at-bench/reprioritized",
+          "action": "supervisor re-allocates replacement serial of same type; log who/when/why/old_serial/new_serial; retain both in genealogy",
+          "override": "supervisor_authorized",
+          "automatic": false,
+          "halts_order": false,
+          "on_release": "report release reason code to inventory module; factory must NOT return part to available stock on its own authority"
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "name": "Assembly",
+      "ownership": "factory_core",
+      "description": "Assembler scans each serialized part at the moment of assembly; scan is a verification gate (not part selection); successful scan marries the serial to the device genealogy.",
+      "requirements": ["ASM-1", "ASM-2", "ASM-3"],
+      "controls": [
+        {
+          "type": "hardstop",
+          "trigger_cases": [
+            "wrong_part_type_for_step",
+            "wrong_or_unallocated_serial",
+            "already_used_serial",
+            "out_of_sequence",
+            "unknown_serial"
+          ],
+          "action": "block step, show clear reason",
+          "override": "none",
+          "note": "Part correctness is enforced upstream by the inventory operator; bench scan catches anything wrong that reached the station."
+        }
+      ]
+    },
+    {
+      "stage": 6,
+      "name": "Software & firmware install",
+      "ownership": "factory_core",
+      "description": "Install the same pinned, validated factory baseline on every device; device reaches a known identical state before networking; no cloud identity yet.",
+      "requirements": ["SW-1", "SW-2"]
+    },
+    {
+      "stage": 7,
+      "name": "Software & firmware update from cloud",
+      "ownership": "factory_core",
+      "description": "Unit must confirm it holds the latest production SW/FW from the cloud before passing.",
+      "requirements": ["SW-3", "SW-4", "SW-5"],
+      "controls": [
+        {
+          "type": "hardstop_cloud_dependency",
+          "trigger": "cloud unreachable",
+          "action": "hard-block affected units until cloud returns",
+          "override": "none",
+          "documented_management_decision": true,
+          "decision_note": "Production throughput is intentionally coupled to cloud availability at stage 7. A cloud or connectivity outage halts all affected units with no override. Accepted operational tradeoff to guarantee every shipped unit carries the latest production SW/FW. Chosen deliberately."
+        }
+      ],
+      "derived_requirements": [
+        {"id": "SW-5", "statement": "Monitor cloud/connectivity availability and alert the floor immediately when stage 7 is blocked and why."}
+      ]
+    },
+    {
+      "stage": 8,
+      "name": "Cloud provisioning",
+      "ownership": "factory_core",
+      "description": "Device enrolled with the cloud and issued its permanent cloud identity/credentials.",
+      "requirements": ["PROV-1", "PROV-2", "PROV-3"],
+      "identity_model": {
+        "created_at": "provisioning_stage_8",
+        "cloud_identity_type": "separate_credential_keys_or_certificate",
+        "relationship_to_genealogy_serial": "one_to_one_linked_but_distinct_value",
+        "rotatable": true,
+        "genealogy_serial_immutable": true
+      }
+    },
+    {
+      "stage": 9,
+      "name": "Hardware checks / setup",
+      "ownership": "factory_core",
+      "is_gate": true,
+      "description": "Configuration-driven hardware checks against the ordered model recipe; verify the built unit matches its order; flag missing/unexpected hardware.",
+      "requirements": ["GATE-1", "GATE-2", "HW-1", "HW-2", "MDL-1"],
+      "controls": [
+        {
+          "type": "gate",
+          "pass_action": "proceed to stage 10",
+          "fail_action": "route to hardware rework (build/component fix), then re-enter stage 9",
+          "fail_reentry_stage": 9
+        }
+      ]
+    },
+    {
+      "stage": 10,
+      "name": "Calibration",
+      "ownership": "factory_core",
+      "is_gate": true,
+      "description": "Calibrate against certified reference standards; capture full reproducible record.",
+      "requirements": ["CAL-1", "CAL-2", "CAL-3", "CAL-4", "CAL-5", "CAL-6"],
+      "record_captured": [
+        "reference_standards_used_with_cert_id_and_expiry",
+        "raw_readings_per_standard",
+        "resulting_coefficients_written_to_device",
+        "calibration_equipment_fixture_id",
+        "operator",
+        "timestamp",
+        "environmental_conditions",
+        "device_firmware_software_version_at_calibration"
+      ],
+      "controls": [
+        {
+          "type": "hardstop",
+          "trigger": "any reference standard expired or lacking a valid certificate",
+          "action": "cannot begin or complete calibration",
+          "override": "none"
+        },
+        {
+          "type": "retry_loop",
+          "max_attempts": 3,
+          "each_attempt_recorded": true,
+          "on_pass": "record passing run on certificate; retain all attempts internally",
+          "on_cap_exceeded": "escalate to supervisor disposition"
+        },
+        {
+          "type": "disposition",
+          "authority": "supervisor",
+          "options": ["route_back_to_hardware_stage_9", "scrap_or_quarantine"],
+          "scrap_authority": "manager_tier",
+          "logged": true
+        }
+      ],
+      "certificate_policy": "Shipped certificate shows only the valid passing run; full internal record retains all attempts."
+    },
+    {
+      "stage": 11,
+      "name": "Quality Control",
+      "ownership": "factory_core",
+      "is_gate": true,
+      "description": "Final human sign-off on both the physical unit and its complete record.",
+      "requirements": ["GATE-1", "GATE-2", "QC-1", "QC-2", "QC-3"],
+      "checks": [
+        "physical_cosmetic_condition",
+        "correct_labeling_and_serial",
+        "accessories_and_seals",
+        "digital_record_complete_and_consistent",
+        "genealogy_complete",
+        "calibration_certificate_generated",
+        "every_prior_required_gate_passed",
+        "required_regulatory_documents_present"
+      ],
+      "controls": [
+        {
+          "type": "gate",
+          "fail_action": "route to QC rework/disposition, then re-enter stage 11",
+          "pass_action": "finalize record and authorize unit for stage 12 and shipping",
+          "pass_is_trigger_for": ["finalize_record", "authorize_backup", "authorize_shipping"],
+          "separation_of_duty": "QC signer cannot be the person who did the work on that unit (see RBAC-3, RBAC-4)"
+        }
+      ]
+    },
+    {
+      "stage": 12,
+      "name": "Cloud backup",
+      "ownership": "factory_core",
+      "description": "Back up the unit's complete factory record to the cloud before packaging/shipping.",
+      "requirements": ["BK-1", "BK-2"],
+      "backed_up": ["genealogy", "calibration_record", "certificate", "test_results"],
+      "controls": [
+        {
+          "type": "hardstop_cloud_dependency",
+          "trigger": "cloud backup cannot complete (cloud/connectivity unavailable)",
+          "action": "hard-block unit; cannot proceed to packaging/shipping until backed up",
+          "override": "none",
+          "documented_management_decision": true,
+          "decision_note": "As at stage 7, the line is intentionally coupled to cloud availability. A device must not leave the floor until its irreplaceable record is preserved off-site. Accepted deliberately."
+        }
+      ]
+    },
+    {
+      "stage": 13,
+      "name": "Package",
+      "ownership": "factory_separable",
+      "description": "Packaging; separable into a future fulfillment system.",
+      "requirements": ["SHIP-1", "SHIP-3"]
+    },
+    {
+      "stage": 14,
+      "name": "Ship",
+      "ownership": "factory_separable",
+      "description": "Record packaged/shipped status with timestamp and operator; attach final shipping documents and calibration certificate; factory lifecycle complete at 'shipped'.",
+      "requirements": ["SHIP-1", "SHIP-2", "SHIP-3", "SHIP-4"],
+      "out_of_scope": ["destination", "carrier", "tracking_number", "billing"],
+      "lifecycle_end": "shipped"
+    }
+  ],
+  "requirements": {
+    "UNIT-1": {"stage_ref": 0, "statement": "The system tracks an individual device and its serial-worthy sub-assemblies, married into a single final device serial (genealogy serial)."},
+    "UNIT-2": {"stage_ref": 0, "statement": "Serial-worthy sub-assemblies married into the genealogy: x-ray tube, detector, DPP, SOM, MCB (carrier board), battery pack, BMS board, chassis. List must be extensible.", "related": ["GP-5"]},
+    "UNIT-3": {"stage_ref": 0, "statement": "Serial numbers and lot information are owned by the Inventory Management module; the factory consumes/binds serial+lot across an interface and does not own the inventory record.", "rationale": "Keeps the inventory module independently designable."},
+    "ORD-1": {"stage_ref": 3, "statement": "An approved order must contain at minimum: order identifier, model/variant, chosen options/flags, quantity, approval marker (who approved, when)."},
+    "ORD-2": {"stage_ref": 3, "statement": "Validate an incoming order at the boundary; reject any order missing a required field or naming an unknown model; report the rejection reason upstream.", "rationale": "Don't let a malformed or un-buildable order onto the floor."},
+    "ORD-3": {"stage_ref": 3, "statement": "An order for a model with no known recipe must be rejected; a model recipe must exist before an order for that model can be admitted.", "related": ["MDL-1"]},
+    "ORD-4": {"stage_ref": 3, "statement": "Logistics information (destination, carrier, billing, tracking) is NOT required on the order and is out of scope (reserved for fulfillment)."},
+    "ALLOC-1": {"stage_ref": 4, "statement": "Allocation reserves specific serial numbers for the order; the inventory operator delivers those exact units to the bench.", "rationale": "Parts are QC'ed at incoming before entering inventory, so every serial in stock is known-good; makes strict serial-level allocation workable with strongest traceability."},
+    "ALLOC-2": {"stage_ref": 4, "statement": "When an allocated serial cannot be used, a supervisor may re-allocate a replacement serial of the same type; the swap must be logged (who, when, why, old serial, new serial)."},
+    "ALLOC-3": {"stage_ref": 4, "statement": "Both the original (released) serial and its replacement must remain in the unit's genealogy/history; re-allocation does not erase the original."},
+    "ALLOC-4": {"stage_ref": 4, "statement": "Re-allocation is not automatic and does not halt the order; it requires supervisor authorization.", "rationale": "Silent auto-swaps lose the trail; halting entirely is too brittle at 10+/day."},
+    "ALLOC-5": {"stage_ref": 4, "statement": "On release of a serial, report the release reason code (damaged/lost/failed-at-bench/reprioritized) to the Inventory module and let it decide the part's fate; the factory must NOT return a part to available stock on its own authority.", "rationale": "Factory knows why the swap happened, but judging the part is inventory's job."},
+    "ASM-1": {"stage_ref": 5, "statement": "At each assembly scan, hard-stop (block step, clear reason, no operator override) on: wrong part type, wrong/unallocated serial, already-used serial, out-of-sequence, unknown serial."},
+    "ASM-2": {"stage_ref": 5, "statement": "No override of an assembly hard-stop at the bench; correctness of delivered parts is enforced upstream by the inventory operator; the bench scan is the verification."},
+    "ASM-3": {"stage_ref": 5, "statement": "A successful assembly scan binds (marries) that specific serial to the device's genealogy."},
+    "SW-1": {"stage_ref": 6, "statement": "Every device receives the same pinned, validated factory SW/FW baseline at install; the device reaches a known identical state before networking.", "rationale": "Rules out mystery software if calibration/test later fails; clean audit answer to what was originally installed."},
+    "SW-2": {"stage_ref": 6, "statement": "At install, the device does not yet have a unique cloud identity; it carries only the generic validated baseline."},
+    "SW-3": {"stage_ref": 7, "statement": "A unit cannot pass stage 7 until it has confirmed it holds the latest production SW/FW from the cloud."},
+    "SW-4": {"stage_ref": 7, "statement": "If the cloud is unreachable at stage 7, affected units are hard-blocked and wait until the cloud returns; no override path.", "documented_management_decision": true, "against_recommendation": true},
+    "SW-5": {"stage_ref": 7, "statement": "Monitor cloud/connectivity availability and alert the floor immediately when stage 7 is blocked and why.", "type": "derived"},
+    "PROV-1": {"stage_ref": 8, "statement": "The device's permanent cloud identity is created at provisioning (stage 8) when the device is enrolled and issued operational credentials."},
+    "PROV-2": {"stage_ref": 8, "statement": "The cloud identity is a separate credential (keys/certificate), distinct from the genealogy serial, bound one-to-one to it."},
+    "PROV-3": {"stage_ref": 8, "statement": "The cloud credential must be independently rotatable; if compromised or expired, the cloud re-issues a new credential bound to the same unchanging genealogy serial. The genealogy serial must never change.", "rationale": "Replace a compromised credential without altering physical identity or build record."},
+    "GATE-1": {"stage_ref": [9, 10, 11], "statement": "Stages 9, 10, 11 are three independent gates; a unit must pass each to reach the next."},
+    "GATE-2": {"stage_ref": [9, 10, 11], "statement": "Each gate has its own pass/fail and its own rework routing; a failure routes to a stage-specific disposition and re-enters at the correct point.", "rationale": "Preserves the 'why did it fail' signal for yield analysis as volume scales."},
+    "HW-1": {"stage_ref": 9, "statement": "Hardware checks and pass criteria are determined by the ordered device model (configuration-driven)."},
+    "HW-2": {"stage_ref": 9, "statement": "Verify the built unit matches its ordered model recipe; flag missing expected hardware or unexpected hardware present."},
+    "MDL-1": {"stage_ref": 9, "statement": "The product is offered as a handful of fixed models/variants, each with a known fixed hardware recipe; the system holds a small set of model recipes (no combinatorial configuration engine); new models added as new recipes.", "related": ["GP-5"]},
+    "CAL-1": {"stage_ref": 10, "statement": "On successful calibration, capture and retain a full reproducible record: reference standards used (cert IDs and expiry), raw readings per standard, resulting coefficients, calibration equipment/fixture ID, operator, timestamp, environmental conditions, device firmware/SW version."},
+    "CAL-2": {"stage_ref": 10, "statement": "Reference standards are tracked entities, each with cert ID, expiry, and identifier, so the calibration station can verify validity at the point of use.", "type": "derived"},
+    "CAL-3": {"stage_ref": 10, "statement": "Calibration hard-stops (cannot begin or complete, no override) if any reference standard in use is expired or lacks a valid certificate."},
+    "CAL-4": {"stage_ref": 10, "statement": "A unit may retry calibration up to 3 attempts; every attempt, including failed ones, is retained in the full internal record."},
+    "CAL-5": {"stage_ref": 10, "statement": "On exceeding the retry cap, escalate to a supervisor disposition (route back to hardware stage 9, or scrap/quarantine); disposition reason logged; no indefinite retry."},
+    "CAL-6": {"stage_ref": 10, "statement": "The shipped calibration certificate shows only the valid passing run; the full internal record retains all attempts."},
+    "QC-1": {"stage_ref": 11, "statement": "QC is the final human sign-off on both the physical unit (condition, labeling, serial, accessories, seals) and its complete record (genealogy complete, certificate generated, all prior gates passed, regulatory docs present)."},
+    "QC-2": {"stage_ref": 11, "statement": "QC must verify the unit actually passed every prior required stage — a last guard against a record gap."},
+    "QC-3": {"stage_ref": 11, "statement": "Passing QC finalizes the unit's record and authorizes the unit for stage 12 (cloud backup) and shipping."},
+    "BK-1": {"stage_ref": 12, "statement": "After QC, the unit's complete factory record (genealogy, calibration record, certificate, test results) must be backed up to the cloud."},
+    "BK-2": {"stage_ref": 12, "statement": "If cloud backup cannot complete, the unit is hard-blocked and cannot proceed to packaging/shipping until backed up; no override path.", "documented_management_decision": true, "related": ["SW-4"]},
+    "SHIP-1": {"stage_ref": [13, 14], "statement": "Record packaged and shipped status with timestamp and operator; attach final shipping documents and the calibration certificate to the unit's record."},
+    "SHIP-2": {"stage_ref": 14, "statement": "Destination, carrier, and tracking are out of scope for the factory system; reserved for a future fulfillment system."},
+    "SHIP-3": {"stage_ref": [13, 14], "statement": "Packaging/shipping stages must be architecturally separable so they can move into a dedicated fulfillment system later without disrupting the production core."},
+    "SHIP-4": {"stage_ref": 14, "statement": "A unit's factory lifecycle is complete at 'shipped'; delivery, field use, and RMA are outside this system's scope."},
+    "RBAC-1": {"section": "roles", "statement": "Scrap/write-off of a calibrated unit or expensive sub-assembly is a high-cost action requiring the manager tier, not every shift supervisor.", "rationale": "Scrapping a calibrated device or X-ray tube is a real financial and regulatory event."},
+    "RBAC-2": {"section": "roles", "statement": "QC sign-off is its own distinct named authority, not merely a permission every supervisor holds."},
+    "RBAC-3": {"section": "roles", "statement": "One person may hold multiple roles, except the system must enforce separation-of-duty on accountability points: the QC sign-off (and high-cost approvals such as scrap) on a unit cannot be the same person who did the work on that unit.", "rationale": "If the assembler of a unit can sign off its QC, the sign-off is meaningless."},
+    "RBAC-4": {"section": "roles", "statement": "Separation-of-duty is enforced by default but may be waived by the manager tier for a specific unit with a recorded justification (who, why, which unit); a visible, reviewable exception, not routine.", "rationale": "Prevents deadlock on thin staffing; waiver record doubles as a staffing signal."},
+    "AUD-1": {"section": "cross_cutting", "statement": "All retained records (overrides, re-allocations, every calibration attempt, gate results, waivers, sign-offs) must be complete and tamper-evident."},
+    "SCALE-1": {"section": "cross_cutting", "statement": "Support multiple units, stations, and operators at once; target ~10 devices/day, scaling to 100+."},
+    "RPT-1": {"section": "cross_cutting", "statement": "Management must be able to see where every unit is, which units are blocked and why (especially cloud-blocked at stages 7 and 12), and yield/failure data per gate."},
+    "IF-ORD-1": {"section": "interfaces", "target": "eStore_sales_approval", "statement": "Receive an approved order containing ORD-1 fields; be able to reject an invalid/un-buildable order upstream with a reason (ORD-2)."},
+    "IF-INV-1": {"section": "interfaces", "target": "inventory_module", "statement": "Look up and bind serial+lot data for allocated parts."},
+    "IF-INV-2": {"section": "interfaces", "target": "inventory_module", "statement": "On release of an allocated serial, report the release reason code to the inventory module and do not change the part's availability."},
+    "IF-CLD-1": {"section": "interfaces", "target": "cloud", "statement": "Query and obtain the latest production SW/FW from the cloud (stage 7)."},
+    "IF-CLD-2": {"section": "interfaces", "target": "cloud", "statement": "Enroll a device and obtain its cloud identity/credentials at provisioning (stage 8)."},
+    "IF-CLD-3": {"section": "interfaces", "target": "cloud", "statement": "Back up a unit's complete record to the cloud and receive confirmation (stage 12)."},
+    "IF-CLD-4": {"section": "interfaces", "target": "cloud", "statement": "Detect cloud/connectivity unavailability and surface it to the floor (stages 7 and 12 are hard-blocked on it)."}
+  },
+  "roles": {
+    "model": "tiered",
+    "multiple_roles_per_person": true,
+    "separation_of_duty": {
+      "enforced": true,
+      "rule": "the signer/approver of a unit cannot be the person who did the work on that unit",
+      "waivable_by": "manager_tier",
+      "waiver_logged": true
+    },
+    "tiers": [
+      {
+        "tier": "operator",
+        "roles": ["assembler", "inventory_operator"],
+        "may_do": "perform the work of their stage",
+        "override_authority": "none"
+      },
+      {
+        "tier": "supervisor",
+        "roles": ["line_supervisor"],
+        "may_do": ["part_reallocation", "calibration_retry_authorization", "disposition_back_to_hardware"]
+      },
+      {
+        "tier": "manager_qc_authority",
+        "roles": ["manager", "qc_signoff_authority"],
+        "may_do": ["scrap_or_write_off", "qc_final_signoff", "separation_of_duty_waiver"]
+      }
+    ]
+  },
+  "control_patterns": {
+    "hardstops_no_override": [
+      {"id": "ASM-1", "where": "assembly", "trigger": "5 mismatch cases"},
+      {"id": "CAL-3", "where": "calibration", "trigger": "expired/invalid reference standard"},
+      {"id": "ORD-2", "where": "order_receipt", "trigger": "invalid/unknown-model order"},
+      {"id": "SW-4", "where": "sw_fw_update", "trigger": "cloud unreachable", "documented_management_decision": true},
+      {"id": "BK-2", "where": "cloud_backup", "trigger": "cloud unreachable", "documented_management_decision": true}
+    ],
+    "override_points": [
+      {"id": "ALLOC-2", "authority": "supervisor", "action": "re-allocation", "logged": true},
+      {"id": "CAL-5", "authority": "supervisor", "action": "calibration disposition", "logged": true},
+      {"id": "RBAC-1", "authority": "manager_tier", "action": "scrap/write-off", "logged": true},
+      {"id": "RBAC-4", "authority": "manager_tier", "action": "separation-of-duty waiver", "logged": true}
+    ],
+    "rework_loops": [
+      {"stage": 9, "reentry_stage": 9, "path": "hardware rework"},
+      {"stage": 10, "type": "retry", "max_attempts": 3, "on_cap_exceeded": "supervisor disposition to stage 9 or scrap"},
+      {"stage": 11, "reentry_stage": 11, "path": "QC rework/disposition"}
+    ]
+  },
+  "open_items_for_management_decision": [
+    {"id": "OPEN-1", "ref": "SCALE-1", "question": "May a single operator work more than one unit at the same time?"},
+    {"id": "OPEN-2", "ref": "SW-4", "question": "Should any future SW/FW update be flaggable as 'mandatory before ship' as an exception? Current decision is a uniform hard block with no exception."}
+  ],
+  "decisions_against_recommendation": [
+    {"question": "Q8b", "topic": "SW/FW update on cloud outage", "recommended": "continue on validated baseline", "decided": "block until updated", "captured_in": ["SW-4"]},
+    {"question": "Q8c", "topic": "escape path during stage-7 cloud outage", "recommended": "supervisor/critical-only override", "decided": "hard block, no override", "captured_in": ["SW-4", "SW-5"]},
+    {"question": "Q9", "topic": "when cloud identity is created", "recommended": "at install, activated at provisioning", "decided": "at provisioning", "captured_in": ["PROV-1"]}
+  ],
+  "decision_log": [
+    {"n": 1, "decision": "System scope", "choice": "MES core with full per-unit traceability; digital twin/simulation deferred"},
+    {"n": 2, "decision": "Scope boundary", "choice": "Factory owns stages 3-14; eStore, cloud, inventory external; 13-14 separable"},
+    {"n": 3, "decision": "Allocation method", "choice": "Serial-level, supported by incoming QC of parts"},
+    {"n": 4, "decision": "Bad/missing allocated part", "choice": "Supervisor re-allocation, logged; original + replacement kept in genealogy"},
+    {"n": 5, "decision": "Released part to inventory", "choice": "Report reason code; inventory decides fate; factory never frees stock itself"},
+    {"n": 6, "decision": "Assembly mismatch", "choice": "Hard-stop on all five cases; no bench override"},
+    {"n": 7, "decision": "SW/FW install", "choice": "Pinned validated baseline first"},
+    {"n": 8, "decision": "SW/FW update on cloud outage", "choice": "Hard block, no override (documented tradeoff)"},
+    {"n": 9, "decision": "Cloud identity", "choice": "Created at provisioning; separate credential bound 1:1 to serial; rotatable"},
+    {"n": 10, "decision": "Gates 9/10/11", "choice": "Three independent gates, each with own pass/fail and rework"},
+    {"n": 11, "decision": "Hardware checks", "choice": "Configuration-driven against the ordered model recipe"},
+    {"n": 12, "decision": "Product configurability", "choice": "A handful of fixed models; unknown-model orders rejected"},
+    {"n": 13, "decision": "Calibration record", "choice": "Full reproducible record retained"},
+    {"n": 14, "decision": "Expired standard", "choice": "Hard-stop, no override; standards are tracked entities"},
+    {"n": 15, "decision": "Calibration failure", "choice": "Retry cap 3 then supervisor disposition; clean certificate, complete history"},
+    {"n": 16, "decision": "QC", "choice": "Final human sign-off on unit + record; finalizes and authorizes for ship"},
+    {"n": 17, "decision": "Backup on cloud outage", "choice": "Hard block, no override (documented tradeoff)"},
+    {"n": 18, "decision": "Package/ship", "choice": "Minimal close-out; logistics out of scope; separable"},
+    {"n": 19, "decision": "Roles", "choice": "Three tiers; multiple roles per person; separation-of-duty enforced, manager-waivable"},
+    {"n": 20, "decision": "Order contents", "choice": "Sufficient-for-the-line set required; invalid/unknown-model orders rejected"}
+  ]
+}

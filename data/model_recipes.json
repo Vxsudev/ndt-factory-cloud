@@ -1,0 +1,106 @@
+{
+  "model_recipes": [
+    {
+      "id": "MODEL-XRF-BASIC",
+      "model_name": "XRF Basic",
+      "required_part_types": [
+        "DETECTOR_MODULE",
+        "POWER_SUPPLY",
+        "MAINBOARD",
+        "CHASSIS"
+      ],
+      "hardware_checks": [
+        {
+          "check_id": "HW-CHECK-001",
+          "name": "Detector module present and responsive",
+          "type": "presence_and_response",
+          "target_part_type": "DETECTOR_MODULE",
+          "pass_criteria": "device_responds_to_init_command"
+        },
+        {
+          "check_id": "HW-CHECK-002",
+          "name": "Power supply voltage within spec",
+          "type": "measurement",
+          "target_part_type": "POWER_SUPPLY",
+          "pass_criteria": "voltage_within_5_percent_of_nominal"
+        },
+        {
+          "check_id": "HW-CHECK-003",
+          "name": "Mainboard firmware version matches baseline",
+          "type": "version_check",
+          "target_part_type": "MAINBOARD",
+          "pass_criteria": "firmware_matches_factory_baseline"
+        }
+      ],
+      "calibration_profile": {
+        "method": "two_point_energy_calibration",
+        "reference_standards_required": 2,
+        "tolerance_keV": 0.5,
+        "min_counts_per_standard": 10000,
+        "max_drift_from_nominal_percent": 2.0
+      },
+      "firmware_baseline": "FW-XRF-BASIC-v2.4.1",
+      "active": true,
+      "source_refs": ["Digital_Factory_Requirements.json#stage=9", "Digital_Factory_Requirements.json#stage=10"]
+    },
+    {
+      "id": "MODEL-XRF-PRO",
+      "model_name": "XRF Pro",
+      "required_part_types": [
+        "DETECTOR_MODULE",
+        "POWER_SUPPLY",
+        "MAINBOARD",
+        "CHASSIS",
+        "SECONDARY_DETECTOR",
+        "WIFI_MODULE"
+      ],
+      "hardware_checks": [
+        {
+          "check_id": "HW-CHECK-001",
+          "name": "Primary detector module present and responsive",
+          "type": "presence_and_response",
+          "target_part_type": "DETECTOR_MODULE",
+          "pass_criteria": "device_responds_to_init_command"
+        },
+        {
+          "check_id": "HW-CHECK-002",
+          "name": "Secondary detector module present and responsive",
+          "type": "presence_and_response",
+          "target_part_type": "SECONDARY_DETECTOR",
+          "pass_criteria": "device_responds_to_init_command"
+        },
+        {
+          "check_id": "HW-CHECK-003",
+          "name": "Power supply voltage within spec",
+          "type": "measurement",
+          "target_part_type": "POWER_SUPPLY",
+          "pass_criteria": "voltage_within_3_percent_of_nominal"
+        },
+        {
+          "check_id": "HW-CHECK-004",
+          "name": "Wifi module associates to test AP",
+          "type": "connectivity",
+          "target_part_type": "WIFI_MODULE",
+          "pass_criteria": "association_confirmed"
+        },
+        {
+          "check_id": "HW-CHECK-005",
+          "name": "Mainboard firmware version matches baseline",
+          "type": "version_check",
+          "target_part_type": "MAINBOARD",
+          "pass_criteria": "firmware_matches_factory_baseline"
+        }
+      ],
+      "calibration_profile": {
+        "method": "three_point_energy_calibration",
+        "reference_standards_required": 3,
+        "tolerance_keV": 0.2,
+        "min_counts_per_standard": 50000,
+        "max_drift_from_nominal_percent": 1.0
+      },
+      "firmware_baseline": "FW-XRF-PRO-v3.1.0",
+      "active": true,
+      "source_refs": ["Digital_Factory_Requirements.json#stage=9", "Digital_Factory_Requirements.json#stage=10"]
+    }
+  ]
+}

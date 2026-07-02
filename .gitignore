@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Test artifacts
+.pytest_cache/
+coverage/
+*.cover
+
+# OS temp
+/tmp/.os-compile-token
+
+.playwright-mcp/
+
+# Raystrat Engineering OS — local governance/runtime only
+/vendor/engineering-os/
+/.engineering-os/
+
+# Local AI/OS boot files
+/ENGINEERING_OS.md
+/PROJECT_BOOTSTRAP.md
+/CLAUDE.md

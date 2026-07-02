@@ -1,0 +1,82 @@
+{
+  "parts": [
+    {
+      "id": "PART-0001",
+      "part_type": "DETECTOR_MODULE",
+      "serial_number": "DM-SN-MOCK-0001",
+      "lot_number": "LOT-2026-A",
+      "inventory_status": "allocated_bound",
+      "allocated_to_order_id": "ORDER-0001",
+      "bound_to_unit_id": "UNIT-0001",
+      "released": false,
+      "release_reason_code": null,
+      "source_system": "inventory",
+      "note": "Bound at assembly step 1 for UNIT-0001"
+    },
+    {
+      "id": "PART-0002",
+      "part_type": "POWER_SUPPLY",
+      "serial_number": "PS-SN-MOCK-0002",
+      "lot_number": "LOT-2026-A",
+      "inventory_status": "allocated_unbound",
+      "allocated_to_order_id": "ORDER-0001",
+      "bound_to_unit_id": null,
+      "released": false,
+      "release_reason_code": null,
+      "source_system": "inventory",
+      "note": "Allocated to UNIT-0001 but not yet scanned at assembly bench"
+    },
+    {
+      "id": "PART-0003",
+      "part_type": "DETECTOR_MODULE",
+      "serial_number": "DM-SN-MOCK-0003",
+      "lot_number": "LOT-2026-A",
+      "inventory_status": "allocated_bound",
+      "allocated_to_order_id": "ORDER-0001",
+      "bound_to_unit_id": "UNIT-0005",
+      "released": false,
+      "release_reason_code": null,
+      "source_system": "inventory",
+      "note": "Bound in UNIT-0005 awaiting QC sign-off"
+    },
+    {
+      "id": "PART-0004",
+      "part_type": "DETECTOR_MODULE",
+      "serial_number": "DM-SN-MOCK-0004",
+      "lot_number": "LOT-2026-B",
+      "inventory_status": "released",
+      "allocated_to_order_id": "ORDER-0001",
+      "bound_to_unit_id": "UNIT-0004",
+      "released": true,
+      "release_reason_code": "damaged_at_bench",
+      "source_system": "inventory",
+      "note": "Released from UNIT-0004 after damage discovered; replacement part re-allocated by supervisor. Retained in genealogy per policy."
+    },
+    {
+      "id": "PART-0005",
+      "part_type": "DETECTOR_MODULE",
+      "serial_number": "DM-SN-MOCK-0005",
+      "lot_number": "LOT-2026-A",
+      "inventory_status": "allocated_bound",
+      "allocated_to_order_id": "ORDER-0001",
+      "bound_to_unit_id": "UNIT-0002",
+      "released": false,
+      "release_reason_code": null,
+      "source_system": "inventory",
+      "note": "Bound in UNIT-0002, which is currently cloud-blocked at stage 7"
+    },
+    {
+      "id": "PART-0006",
+      "part_type": "DETECTOR_MODULE",
+      "serial_number": "DM-SN-MOCK-0006",
+      "lot_number": "LOT-2026-C",
+      "inventory_status": "allocated_bound",
+      "allocated_to_order_id": "ORDER-0001",
+      "bound_to_unit_id": "UNIT-0003",
+      "released": false,
+      "release_reason_code": null,
+      "source_system": "inventory",
+      "note": "Bound in UNIT-0003, calibration attempt 2/3 in progress"
+    }
+  ]
+}

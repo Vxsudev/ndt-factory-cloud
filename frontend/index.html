@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="app-d6" content="factory-flow-board" />
+    <meta name="app-phase" content="D8-review-prototype" />
+    <meta name="app-d8" content="demo-readiness" />
+    <meta name="app-d8a" content="light-review" />
+    <meta name="app-theme" content="light-review" />
+    <meta name="app-d8b" content="material-theme-toggle" />
+    <meta name="app-d8b-theme" content="true" />
+    <title>Factory Cloud v0 — D8 Review Prototype</title>
+    <script>
+      (function () {
+        var stored = localStorage.getItem('factory-theme');
+        var theme = stored === 'dark' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "pipeline-test": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-06-30T06:39:22Z"
+  },
+  "factory-review-hardening": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-06-30T11:10:00Z"
+  },
+  "light-mode-readability-d8a": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-06-30T12:00:00Z"
+  },
+  "material-theme-readability-d8b": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-06-30T18:00:00Z"
+  },
+  "touch-first-responsive-factory-ui-d8c": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-02T11:03:25Z"
+  }
+}

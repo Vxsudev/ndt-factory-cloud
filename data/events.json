@@ -1,0 +1,368 @@
+{
+  "events": [
+    {
+      "id": "EVT-0001",
+      "unit_id": null,
+      "order_id": "ORDER-0001",
+      "event_type": "order_accepted",
+      "stage_id": "STAGE-03",
+      "actor_user_id": null,
+      "timestamp": "2026-06-28T08:14:00Z",
+      "message": "Order ORDER-0001 accepted at factory boundary. Model MODEL-XRF-BASIC found in recipe registry.",
+      "severity": "info",
+      "payload": {
+        "model_id": "MODEL-XRF-BASIC",
+        "quantity": 1
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=3]"]
+    },
+    {
+      "id": "EVT-0002",
+      "unit_id": "UNIT-0001",
+      "order_id": "ORDER-0001",
+      "event_type": "parts_allocated",
+      "stage_id": "STAGE-04",
+      "actor_user_id": "USER-OP-0002",
+      "timestamp": "2026-06-29T13:55:00Z",
+      "message": "Parts allocated for UNIT-0001: PART-0001 (DETECTOR_MODULE), PART-0002 (POWER_SUPPLY).",
+      "severity": "info",
+      "payload": {
+        "parts": ["PART-0001", "PART-0002"]
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=4]"]
+    },
+    {
+      "id": "EVT-0003",
+      "unit_id": "UNIT-0001",
+      "order_id": "ORDER-0001",
+      "event_type": "assembly_part_bound",
+      "stage_id": "STAGE-05",
+      "actor_user_id": "USER-OP-0001",
+      "timestamp": "2026-06-29T14:30:00Z",
+      "message": "PART-0001 (DM-SN-MOCK-0001) scanned and bound to UNIT-0001 at assembly step 1.",
+      "severity": "info",
+      "payload": {
+        "part_id": "PART-0001",
+        "serial_number": "DM-SN-MOCK-0001",
+        "assembly_step": 1,
+        "station": "BENCH-A1"
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=5]"]
+    },
+    {
+      "id": "EVT-0004",
+      "unit_id": "UNIT-0002",
+      "order_id": "ORDER-0001",
+      "event_type": "cloud_block_raised",
+      "stage_id": "STAGE-07",
+      "actor_user_id": null,
+      "timestamp": "2026-06-30T06:00:00Z",
+      "message": "UNIT-0002 blocked at stage 7: cloud unreachable — SW/FW update cannot proceed. Hard block, no override. Floor alert issued.",
+      "severity": "critical",
+      "payload": {
+        "block_type": "hardstop_cloud_dependency",
+        "no_override": true,
+        "floor_alert_issued": true
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=7]", "Digital_Factory_Requirements.json#decisions_against_recommendation[Q8b]"]
+    },
+    {
+      "id": "EVT-0005",
+      "unit_id": null,
+      "order_id": null,
+      "event_type": "floor_alert",
+      "stage_id": "STAGE-07",
+      "actor_user_id": null,
+      "timestamp": "2026-06-30T06:00:05Z",
+      "message": "Floor alert: cloud connectivity lost. All units at stage 7 hard-blocked pending reconnect.",
+      "severity": "critical",
+      "payload": {
+        "affected_stage": "STAGE-07",
+        "affected_units": ["UNIT-0002"]
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=7]"]
+    },
+    {
+      "id": "EVT-0006",
+      "unit_id": "UNIT-0003",
+      "order_id": "ORDER-0001",
+      "event_type": "hardware_gate_passed",
+      "stage_id": "STAGE-09",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-28T16:00:00Z",
+      "message": "UNIT-0003 passed hardware checks gate (stage 9). All checks passed against MODEL-XRF-BASIC recipe.",
+      "severity": "info",
+      "payload": {
+        "checks_run": ["HW-CHECK-001", "HW-CHECK-002", "HW-CHECK-003"],
+        "all_passed": true
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=9]"]
+    },
+    {
+      "id": "EVT-0007",
+      "unit_id": "UNIT-0003",
+      "order_id": "ORDER-0001",
+      "event_type": "calibration_attempt_failed",
+      "stage_id": "STAGE-10",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-29T08:00:00Z",
+      "message": "UNIT-0003 calibration attempt 1/3 failed. Reason: coefficient_out_of_range. Attempt recorded.",
+      "severity": "warning",
+      "payload": {
+        "attempt_number": 1,
+        "max_attempts": 3,
+        "failure_reason": "coefficient_out_of_range",
+        "ref_std_used": "REFSTD-0001"
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "EVT-0008",
+      "unit_id": "UNIT-0003",
+      "order_id": "ORDER-0001",
+      "event_type": "calibration_attempt_failed",
+      "stage_id": "STAGE-10",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-29T09:30:00Z",
+      "message": "UNIT-0003 calibration attempt 2/3 failed. Reason: coefficient_out_of_range. 1 attempt remaining.",
+      "severity": "warning",
+      "payload": {
+        "attempt_number": 2,
+        "max_attempts": 3,
+        "failure_reason": "coefficient_out_of_range",
+        "ref_std_used": "REFSTD-0001",
+        "remaining_attempts": 1
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "EVT-0009",
+      "unit_id": "UNIT-0004",
+      "order_id": "ORDER-0001",
+      "event_type": "calibration_attempt_failed",
+      "stage_id": "STAGE-10",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-28T12:00:00Z",
+      "message": "UNIT-0004 calibration attempt 1/3 failed.",
+      "severity": "warning",
+      "payload": {
+        "attempt_number": 1,
+        "max_attempts": 3,
+        "failure_reason": "coefficient_out_of_range",
+        "ref_std_used": "REFSTD-0001"
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "EVT-0010",
+      "unit_id": "UNIT-0004",
+      "order_id": "ORDER-0001",
+      "event_type": "calibration_attempt_failed",
+      "stage_id": "STAGE-10",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-28T13:30:00Z",
+      "message": "UNIT-0004 calibration attempt 2/3 failed.",
+      "severity": "warning",
+      "payload": {
+        "attempt_number": 2,
+        "max_attempts": 3,
+        "failure_reason": "coefficient_out_of_range",
+        "ref_std_used": "REFSTD-0001",
+        "remaining_attempts": 1
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "EVT-0011",
+      "unit_id": "UNIT-0004",
+      "order_id": "ORDER-0001",
+      "event_type": "calibration_attempt_failed",
+      "stage_id": "STAGE-10",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-29T11:00:00Z",
+      "message": "UNIT-0004 calibration attempt 3/3 failed. Calibration cap exceeded.",
+      "severity": "error",
+      "payload": {
+        "attempt_number": 3,
+        "max_attempts": 3,
+        "failure_reason": "coefficient_out_of_range",
+        "ref_std_used": "REFSTD-0001",
+        "cap_exceeded": true
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "EVT-0012",
+      "unit_id": "UNIT-0004",
+      "order_id": "ORDER-0001",
+      "event_type": "calibration_disposition_required",
+      "stage_id": "STAGE-10",
+      "actor_user_id": null,
+      "timestamp": "2026-06-29T11:00:01Z",
+      "message": "UNIT-0004 calibration cap exceeded. Supervisor disposition required: route to hardware stage 9 or scrap/quarantine.",
+      "severity": "critical",
+      "payload": {
+        "cap_exceeded": true,
+        "disposition_options": ["route_back_to_hardware_stage_9", "scrap_or_quarantine"],
+        "scrap_authority": "manager_tier"
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "EVT-0013",
+      "unit_id": "UNIT-0003",
+      "order_id": "ORDER-0001",
+      "event_type": "hardware_gate_passed",
+      "stage_id": "STAGE-09",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-28T16:00:00Z",
+      "message": "UNIT-0003 passed hardware checks gate.",
+      "severity": "info",
+      "payload": {
+        "all_passed": true
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=9]"]
+    },
+    {
+      "id": "EVT-0014",
+      "unit_id": "UNIT-0004",
+      "order_id": "ORDER-0001",
+      "event_type": "hardware_gate_passed",
+      "stage_id": "STAGE-09",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-28T11:30:00Z",
+      "message": "UNIT-0004 passed hardware checks gate.",
+      "severity": "info",
+      "payload": {
+        "all_passed": true
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=9]"]
+    },
+    {
+      "id": "EVT-0015",
+      "unit_id": "UNIT-0005",
+      "order_id": "ORDER-0001",
+      "event_type": "calibration_attempt_passed",
+      "stage_id": "STAGE-10",
+      "actor_user_id": "USER-TECH-0001",
+      "timestamp": "2026-06-28T09:00:00Z",
+      "message": "UNIT-0005 calibration passed on attempt 1/3. Certificate CERT-MOCK-0005 issued.",
+      "severity": "info",
+      "payload": {
+        "attempt_number": 1,
+        "max_attempts": 3,
+        "ref_std_used": "REFSTD-0001",
+        "certificate_id": "CERT-MOCK-0005"
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=10]"]
+    },
+    {
+      "id": "EVT-0016",
+      "unit_id": "UNIT-0005",
+      "order_id": "ORDER-0001",
+      "event_type": "qc_ready",
+      "stage_id": "STAGE-11",
+      "actor_user_id": null,
+      "timestamp": "2026-06-28T09:01:00Z",
+      "message": "UNIT-0005 ready for QC sign-off at stage 11.",
+      "severity": "info",
+      "payload": {},
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=11]"]
+    },
+    {
+      "id": "EVT-0017",
+      "unit_id": "UNIT-0006",
+      "order_id": "ORDER-0001",
+      "event_type": "qc_passed",
+      "stage_id": "STAGE-11",
+      "actor_user_id": "USER-QC-0001",
+      "timestamp": "2026-06-27T10:00:00Z",
+      "message": "UNIT-0006 QC sign-off completed by USER-QC-0001. All checks passed. Record finalized.",
+      "severity": "info",
+      "payload": {
+        "signed_by": "USER-QC-0001",
+        "record_finalized": true,
+        "shipping_authorized": true
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=11]"]
+    },
+    {
+      "id": "EVT-0018",
+      "unit_id": "UNIT-0006",
+      "order_id": "ORDER-0001",
+      "event_type": "cloud_block_raised",
+      "stage_id": "STAGE-12",
+      "actor_user_id": null,
+      "timestamp": "2026-06-30T06:00:00Z",
+      "message": "UNIT-0006 blocked at stage 12: cloud backup cannot complete — connectivity unavailable. Hard block, no override.",
+      "severity": "critical",
+      "payload": {
+        "block_type": "hardstop_cloud_dependency",
+        "no_override": true,
+        "backed_up_items": [],
+        "blocked_items": ["genealogy", "calibration_record", "certificate", "test_results"]
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=12]"]
+    },
+    {
+      "id": "EVT-0019",
+      "unit_id": "UNIT-0007",
+      "order_id": "ORDER-0002",
+      "event_type": "cloud_backup_confirmed",
+      "stage_id": "STAGE-12",
+      "actor_user_id": null,
+      "timestamp": "2026-06-25T09:30:00Z",
+      "message": "UNIT-0007 cloud backup confirmed. Genealogy, calibration record, certificate, and test results backed up.",
+      "severity": "info",
+      "payload": {
+        "backed_up": ["genealogy", "calibration_record", "certificate", "test_results"]
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=12]"]
+    },
+    {
+      "id": "EVT-0020",
+      "unit_id": "UNIT-0007",
+      "order_id": "ORDER-0002",
+      "event_type": "packaged",
+      "stage_id": "STAGE-13",
+      "actor_user_id": "USER-OP-0001",
+      "timestamp": "2026-06-25T10:00:00Z",
+      "message": "UNIT-0007 packaged at stage 13.",
+      "severity": "info",
+      "payload": {},
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=13]"]
+    },
+    {
+      "id": "EVT-0021",
+      "unit_id": "UNIT-0007",
+      "order_id": "ORDER-0002",
+      "event_type": "shipped",
+      "stage_id": "STAGE-14",
+      "actor_user_id": "USER-OP-0001",
+      "timestamp": "2026-06-25T11:00:00Z",
+      "message": "UNIT-0007 shipped. Factory lifecycle complete. Record immutable.",
+      "severity": "info",
+      "payload": {
+        "terminal": true,
+        "immutable": true
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=14]"]
+    },
+    {
+      "id": "EVT-0022",
+      "unit_id": null,
+      "order_id": "ORDER-0003",
+      "event_type": "order_rejected",
+      "stage_id": "STAGE-03",
+      "actor_user_id": null,
+      "timestamp": "2026-06-30T06:00:10Z",
+      "message": "Order ORDER-0003 rejected at factory boundary: unknown_model_no_recipe_found for MODEL-XRF-UNKNOWN.",
+      "severity": "error",
+      "payload": {
+        "rejection_reason": "unknown_model_no_recipe_found",
+        "model_id": "MODEL-XRF-UNKNOWN"
+      },
+      "source_refs": ["Digital_Factory_Requirements.json#stages[stage=3]"]
+    }
+  ]
+}

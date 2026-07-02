@@ -85,11 +85,11 @@ When a hard-stop is raised unexpectedly:
 
 ---
 
-## Genealogy Lock Debug Checklist
+## Post-QC Stage Advance Debug Checklist
 
-When genealogy lock fails:
+When S-12 (Factory Data Backup) or later stages fail to advance:
 
-- [ ] Confirm QC_SIGNOFF_GATE (S-09) status is `PASS`
+- [ ] Confirm S-11 (Quality Control) status is `complete` and sign-off is recorded
 - [ ] Confirm unit has no active hard-stops
-- [ ] Confirm unit is not already locked (idempotency check)
 - [ ] Confirm unit is not in a terminal state
+- [ ] Confirm QC sign-off actor identity is recorded (not null/empty)
