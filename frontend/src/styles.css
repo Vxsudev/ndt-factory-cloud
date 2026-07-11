@@ -336,3 +336,29 @@
   min-height: 44px;
   min-width: 44px;
 }
+
+/* ============================================================
+   D9C-1 — Variant review shell tab bars (additive; layout only,
+   no new colors or tokens — reuse the existing theme system)
+   ============================================================ */
+
+.variant-review-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variant-review-tab-bar-primary {
+  padding: 12px;
+}
+
+.variant-review-tab-bar-secondary {
+  padding: 8px 12px 0;
+}
+
+.variant-review-placeholder-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px;
+}

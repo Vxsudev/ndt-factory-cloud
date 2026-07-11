@@ -1268,3 +1268,143 @@ registry; `ai/state_registry.json` now accurately shows `RELEASE_APPROVED` for t
 feature. Historical backfill of prior phases' real transition history (visible in
 the vendor-tree shadow file) was intentionally left as a follow-up recommendation,
 out of D8C's scope.
+
+---
+
+### 2026-07-11
+
+### Feature
+
+d9c-1-variant-review-shell
+
+### Phase
+
+phase-ui
+
+### Spec
+
+specs/d9c-1-variant-review-shell.md
+
+### Tasks
+
+
+- tasks/d9c-1-variant-review-shell-001.md [frontend]
+- tasks/d9c-1-variant-review-shell-002.md [verification]
+
+### Implementation Notes
+
+Executed by execution-supervisor.sh at 2026-07-11T19:17:23Z.
+All 2 tasks completed. Verification passed.
+
+### Pattern Updates
+
+None.
+
+### Incidents
+
+None.
+
+---
+
+## D9C-1 Addendum — Variant Review Shell (full detail)
+
+**Date:** 2026-07-11/12
+**Branch:** `main`
+**Capability:** `d9c-1-variant-review-shell` → `RELEASE_APPROVED`
+
+### Architectural Reasoning
+
+The incoming directive specified a flat 4-tab selector (Current / Assembler View /
+Floor Manager / Operations Center). Recon (`ai/recon/d9c1-variant-review-shell.md`)
+found this conflicted with the operator-settled D9B design (three functional variants —
+Attention-First, Workflow-First, Command-Center — each with its own Assembler and Floor
+Manager sub-view) and stopped per the directive's own "Conflict: STOP" rule rather than
+building the literal wording. The operator was asked and chose: (1) the 3-variant ×
+2-actor-view nested structure over the flat 4-tab reading, and (2) the full spec →
+compile-spec → generate-tasks → execution-supervisor ceremony over direct
+implementation. `specs/d9c-1-variant-review-shell.md` implements that decision.
+
+The shell is reachable additively at `/#/variants`, implemented with a one-time hash
+read in `frontend/src/main.tsx` (no routing library added, `frontend/package.json`
+untouched). `/` (no hash) renders `<App />` completely unwrapped and unmodified — the
+existing baseline is not touched.
+
+### Files Modified/Created
+
+- `frontend/src/components/variant-review/VariantReviewShell.tsx` (new) — primary
+  4-tab switcher (Current / Variant A / Variant B / Variant C).
+- `frontend/src/components/variant-review/VariantPlaceholderPane.tsx` (new) — secondary
+  2-tab switcher (Assembler / Floor Manager) with placeholder-only body, no API calls.
+- `frontend/src/main.tsx` — additive hash-gated `Root()` decision component.
+- `frontend/src/styles.css` — additive-only tab-bar/placeholder-body CSS, reusing
+  existing `surf-*`/`t-on-*`/`b-*`/`touch-target-*` tokens; zero new hardcoded colors.
+- `specs/d9c-1-variant-review-shell.md`, `tasks/d9c-1-variant-review-shell-{001,002}.md`
+  (new, OS pipeline artifacts).
+- `ai/incidents/d9c1-worker-question-not-enforced.md` (new — see Incidents below).
+- `artifacts/d9c1-variant-review-shell-verification/*.png` (new — manual browser
+  verification evidence).
+
+`frontend/src/App.tsx`, `FactoryFlowBoard.tsx` and all existing children,
+`factoryApi.ts`, `types/factory.ts`, `package.json`, `package-lock.json`,
+`vite.config.ts`, `index.html`, `tsconfig.json` — confirmed byte-for-byte unchanged.
+Zero files under `backend/`, `data/`, `vendor/`, `.engineering-os/` touched.
+
+### Invariant Status
+
+`bash scripts/invariant-check.sh` — 6/6 PASS (both pre- and post-execution gates, per
+the automated pipeline run).
+
+### Verification Results
+
+Full existing corpus `scripts/verification/001-011*.sh` — 0 FAIL across all 11 scripts
+(011's one Playwright browser-launch check SKIPs gracefully, as it does on `main`
+today). This was run three times independently: once as a pre-existing baseline before
+any change, once inside the automated pipeline's per-task and final gates, and once
+manually after the run. All three runs are clean.
+
+Additionally verified manually, live, via Playwright MCP against the running docker
+stack (not just the automated corpus):
+- `/` loads and renders the unmodified `FactoryFlowBoard` (screenshot:
+  `artifacts/d9c1-variant-review-shell-verification/d9c1-01-root-unchanged.png`).
+- A fresh load of `/#/variants` renders the 4-tab primary bar
+  (`d9c1-02-variants-shell-current.png`).
+- Clicking "Variant A — Attention-First" renders its nested Assembler/Floor Manager
+  switcher with the exact required placeholder copy, and clicking "Floor Manager"
+  updates the pane reactively with no network request
+  (`d9c1-03-variantA-assembler.png`).
+
+### Unresolved Risks / Known Limitations
+
+1. **Hash-only navigation does not trigger the shell without a reload.** Because
+   `main.tsx` reads `window.location.hash` once at module load (by spec design, to avoid
+   adding a routing library), navigating to `#/variants` from a page that is already
+   loaded at `/` (e.g. editing only the fragment in the address bar, or an in-page
+   `location.hash` change) does not show the shell until the page is actually reloaded —
+   confirmed via manual Playwright testing. Opening `/#/variants` as a fresh link (new
+   tab, or any real navigation) works correctly. **For the client demo: open the
+   `/#/variants` link fresh (new tab) rather than editing the hash on an already-open
+   tab.** A trivial follow-up (a `hashchange` listener in `main.tsx`) would remove this
+   limitation entirely; left out of this capability's minimal shell/routing scope,
+   candidate for a later polish node.
+2. **See `ai/incidents/d9c1-worker-question-not-enforced.md`** — the verification-task
+   worker correctly identified that its own prompt references `ai/execution-orchestrator.md`,
+   which does not exist at that path (only vendored/archived copies exist), and it also
+   flagged that root `PROJECT_BOOTSTRAP.md` is stale. It asked a clarifying question
+   instead of declaring done; the supervisor's exit-code-only check did not actually
+   pause the pipeline for that question. Verification passed on its own merits
+   regardless (confirmed independently, see above), but this is a real gap in the
+   self-running pipeline's ability to honor a worker's "stop and ask," worth its own
+   directed hardening pass — not fixed here since it requires touching `vendor/**`,
+   outside D9C-1's declared scope.
+3. Real Assembler/Floor Manager content for all three variants remains out of scope by
+   design (placeholder-only, later nodes D9C-5/6/7 per
+   `ai/recon/d9c0-variant-review-shell-preflight-scope-lock.md` §7). No dedicated
+   `scripts/verification/012-variant-review-shell.sh` exists yet — intentionally
+   reserved for the later D9C-9 node; this capability's verification gate correctly runs
+   the full existing corpus in fallback mode instead.
+
+### Next Safe Capability
+
+D9C-2 (derived frontend view models) or directly into D9C-5/6/7 (real content for one
+variant at a time) are both safe to begin as separately directed nodes. Neither requires
+further shell/routing rework.

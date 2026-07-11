@@ -18,5 +18,9 @@
   "touch-first-responsive-factory-ui-d8c": {
     "state": "RELEASE_APPROVED",
     "updated_at": "2026-07-02T11:03:25Z"
+  },
+  "d9c-1-variant-review-shell": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-11T19:17:23Z"
   }
 }
