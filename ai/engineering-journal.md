@@ -1408,3 +1408,120 @@ stack (not just the automated corpus):
 D9C-2 (derived frontend view models) or directly into D9C-5/6/7 (real content for one
 variant at a time) are both safe to begin as separately directed nodes. Neither requires
 further shell/routing rework.
+
+---
+
+### 2026-07-11
+
+### Feature
+
+d9c-2-shared-view-model
+
+### Phase
+
+phase-ui
+
+### Spec
+
+specs/d9c-2-shared-view-model.md
+
+### Tasks
+
+
+- tasks/d9c-2-shared-view-model-001.md [frontend]
+- tasks/d9c-2-shared-view-model-002.md [verification]
+
+### Implementation Notes
+
+Executed by execution-supervisor.sh at 2026-07-11T19:54:21Z.
+All 2 tasks completed. Verification passed.
+
+### Pattern Updates
+
+None.
+
+### Incidents
+
+None.
+
+---
+
+## D9C-2 Addendum — Shared View Model (full detail)
+
+**Date:** 2026-07-11/12
+**Branch:** `main`
+**Capability:** `d9c-2-shared-view-model` → `RELEASE_APPROVED`
+
+### Architectural Reasoning
+
+The incoming directive's smoke test implied the three D9C-1 variant placeholders should
+already visibly "consume" a shared view model — but that conflicted with two settled
+facts: `ai/recon/d9c0-variant-review-shell-preflight-scope-lock.md` §7 scopes D9C-2 as
+"derived frontend view models only (no new UI)", and `specs/d9c-1-variant-review-shell.md`
+(already `RELEASE_APPROVED`) locked an acceptance criterion that the three placeholders
+make zero API calls. Recon (`ai/recon/d9c2-shared-view-model.md`) surfaced this and
+stopped. The operator resolved it: D9C-2 is architecture-only — build the canonical view
+model, wire it into nothing. The operator also amended the forward DAG: **D9C-3** now
+migrates Current onto the shared view model (refactor, zero behavior change); **D9C-4
+through D9C-6** migrate the three variants individually, one per node. This supersedes
+the equivalent portion of D9C-0's original D9C-3/4/5-7 labels.
+
+`specs/d9c-2-shared-view-model.md` implements exactly this: a new, standalone
+`frontend/src/view-model/{types.ts,useFactoryViewModel.ts}` pair, faithfully extracted
+from `FactoryFlowBoard.tsx`'s existing fetch/selection/reset logic (same `Promise.all`
+call order, same error handling, same mount-time effect — verified line-by-line, not
+just by script), with **zero consumers wired**. `FactoryFlowBoard.tsx` and the D9C-1
+variant components are untouched, confirmed via `git diff --stat` returning empty for
+all of them.
+
+### Files Modified/Created
+
+- `frontend/src/view-model/types.ts` (new) — `FactoryViewModel` interface, all member
+  types imported from `../types/factory`, no redefinition.
+- `frontend/src/view-model/useFactoryViewModel.ts` (new) — `useFactoryViewModel()` hook,
+  verbatim mirror of `FactoryFlowBoard.tsx`'s current logic (renamed `loadAll`→`reload`,
+  `handleReset`→`resetDemoState` only).
+- `specs/d9c-2-shared-view-model.md`, `tasks/d9c-2-shared-view-model-{001,002}.md` (new,
+  OS pipeline artifacts).
+- `ai/recon/d9c2-shared-view-model.md` (new — STOP recon, conflict + resolution record).
+
+Confirmed byte-for-byte unchanged: `FactoryFlowBoard.tsx` and all existing children,
+`VariantReviewShell.tsx`, `VariantPlaceholderPane.tsx`, `main.tsx`, `App.tsx`,
+`styles.css`, `factoryApi.ts`, `types/factory.ts`, `package.json`, `package-lock.json`,
+`vite.config.ts`, `index.html`, `tsconfig.json`. Zero files under `backend/`, `data/`,
+`vendor/`, `.engineering-os/` touched. A `grep -rn "view-model"` across
+`components/`/`main.tsx`/`App.tsx` returns no matches — confirmed zero consumers.
+
+### Invariant Status
+
+`bash scripts/invariant-check.sh` — 6/6 PASS (pre-execution, pre-verification, and a
+manual re-run after the pipeline completed).
+
+### Verification Results
+
+Full existing corpus `scripts/verification/001-011*.sh` — 0 FAIL across all 11 scripts
+(011's Playwright browser-launch check SKIPs gracefully, as on `main`). Run inside the
+pipeline's per-task and final gates, then re-run manually after completion — all clean.
+No live-browser re-verification was needed beyond this: since zero UI-rendering file
+changed (confirmed by diff), the D9C-1 browser verification already on record continues
+to hold unmodified.
+
+### Unresolved Risks / Known Limitations
+
+1. Deliberate, temporary duplication: `FactoryFlowBoard.tsx` still has its own internal
+   copy of the same fetch/selection logic the new hook now also implements, until D9C-3
+   migrates it. This is intentional per the operator's decision, not an oversight.
+2. Same known adapter-path gap as `ai/incidents/d9c1-worker-question-not-enforced.md`
+   (worker prompts reference `ai/execution-orchestrator.md`, which only exists vendored)
+   — the task-002 worker independently re-noticed it, correctly treated it as
+   non-blocking (same root cause, already documented), and did not stop this time since
+   nothing new followed from it.
+3. No actor-specific derived slices (attention items, per-actor assigned units, etc.)
+   exist yet — intentionally deferred to D9C-4/5/6, since those are actor-specific
+   concerns, not this node's "canonical, actor-agnostic facts" scope.
+
+### Next Safe Capability
+
+D9C-3 — migrate `FactoryFlowBoard` (Current) onto `useFactoryViewModel()`, a refactor
+that must produce zero output/behavior change (verifiable against the full 001–011
+corpus plus live browser re-verification, since this one *does* touch a rendered file).

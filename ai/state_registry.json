@@ -22,5 +22,9 @@
   "d9c-1-variant-review-shell": {
     "state": "RELEASE_APPROVED",
     "updated_at": "2026-07-11T19:17:23Z"
+  },
+  "d9c-2-shared-view-model": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-11T19:54:21Z"
   }
 }
