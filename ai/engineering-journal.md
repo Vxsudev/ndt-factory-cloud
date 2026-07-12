@@ -1525,3 +1525,173 @@ to hold unmodified.
 D9C-3 — migrate `FactoryFlowBoard` (Current) onto `useFactoryViewModel()`, a refactor
 that must produce zero output/behavior change (verifiable against the full 001–011
 corpus plus live browser re-verification, since this one *does* touch a rendered file).
+
+---
+
+### 2026-07-12
+
+### Feature
+
+d9c-3-current-baseline-shared-view-model-migration
+
+### Phase
+
+phase-ui
+
+### Spec
+
+specs/d9c-3-current-baseline-shared-view-model-migration.md
+
+### Tasks
+
+
+- tasks/d9c-3-current-baseline-shared-view-model-migration-001.md [frontend]
+- tasks/d9c-3-current-baseline-shared-view-model-migration-002.md [verification]
+
+### Implementation Notes
+
+Executed by execution-supervisor.sh at 2026-07-12T20:26:19Z.
+All 2 tasks completed. Verification passed.
+
+### Pattern Updates
+
+None.
+
+### Incidents
+
+None.
+
+---
+
+## D9C-3 Addendum — Current Baseline Shared View Model Migration (full detail)
+
+### Architectural Reasoning
+
+Recon (`ai/recon/d9c-3-current-baseline-shared-view-model-migration.md`) performed a
+full field-by-field, operation-by-operation parity comparison between
+`FactoryFlowBoard.tsx`'s pre-migration local state/orchestration and the D9C-2
+`FactoryViewModel` contract, and found **full 1:1 parity with no conflict** — unlike
+D9C-1 and D9C-2, this was a clean migration with nothing requiring an operator
+`AskUserQuestion` pause. `useFactoryViewModel()` is now Current's sole owner of
+factory-data loading, selection, refresh, and reset state; `FactoryFlowBoard.tsx`
+retains only `theme`/`toggleTheme` and `compactPane` as local presentation state,
+exactly as both the directive and the recon's independent parity analysis required.
+
+### State-Ownership Migration Map
+
+| Concern | Before | After |
+|---|---|---|
+| health, contractStatus, stages, units, events, users, parts, refStandards, selectedUnitId, selectedUnit, loadError, resetting | 12 local `useState`s in `FactoryFlowBoard.tsx` | Owned exclusively by `useFactoryViewModel()`, read via `vm.*` |
+| loadAll / refreshSelected / selectUnit / handleReset | 4 local callbacks + 1 mount effect | `reload` / `refreshSelected` / `selectUnit` / `resetDemoState` inside the hook |
+| theme, toggleTheme, theme effect | local | **unchanged, still local** |
+| compactPane, setCompactPane | local | **unchanged, still local** |
+
+### Duplicate Ownership Removed
+
+All 11 `../api/factoryApi` imports and all 12 factory-data `useState`s plus 4
+callbacks plus the mount-load effect were removed from `FactoryFlowBoard.tsx`.
+Confirmed via direct read: the file now contains exactly one
+`useFactoryViewModel()` call site and zero `factoryApi` imports.
+
+### Presentation State Intentionally Retained Locally
+
+`theme`/`toggleTheme` (with its `localStorage`/`data-theme` effect) and
+`compactPane` remain local to `FactoryFlowBoard.tsx`, confirmed unchanged by direct
+read and by live Playwright verification (theme persisted across a reload; compact
+panes switched correctly at a 390px viewport).
+
+### Protected Surfaces Confirmed Untouched
+
+`git diff --stat` confirms only `frontend/src/components/FactoryFlowBoard.tsx`,
+`ai/engineering-journal.md`, and `ai/state_registry.json` changed among tracked
+files. `frontend/src/view-model/{types.ts,useFactoryViewModel.ts}`,
+`frontend/src/components/variant-review/{VariantReviewShell.tsx,VariantPlaceholderPane.tsx}`,
+`main.tsx`, `App.tsx`, `styles.css`, `api/factoryApi.ts`, `types/factory.ts`, and all
+frontend config/lockfiles are byte-for-byte unchanged. Nothing under `backend/`,
+`data/`, `vendor/`, `.engineering-os/` was touched.
+
+### Invariant / Adapter Status
+
+`bash vendor/engineering-os/scripts/os-adapter-check.sh` — 12/12 PASS (adapter valid),
+run fresh at the start of this node. `bash scripts/invariant-check.sh` — 6/6 PASS, run
+at pre-execution, pre-verification, and again after the manual fix described below.
+
+### Verification Results (actual, independently re-run)
+
+Full `scripts/verification/001`–`011` corpus: 0 FAIL across all 11 scripts (011's
+Playwright browser-launch sub-check SKIPs gracefully, as on `main`). Exact per-script
+pass counts on the fresh, post-fix re-run: 001=4/4, 002=4/4, 003=2/2, 004=10/10,
+005=26/26, 006=12/12, 007=17/17, 008=17/17, 009=18/18, 010=21/21, 011=32/32 (+1 SKIP).
+New `scripts/verification/012-d9c-3-current-shared-view-model.sh`: 8/8 PASS (see
+Incident below for why this script did not exist until after the automated pipeline
+run completed).
+
+### Live Browser Verification (independent, beyond the automated pipeline)
+
+Performed manually via Playwright MCP against the running dev stack:
+initial load through `useFactoryViewModel()` confirmed (network trace shows the same
+8-call sequence as pre-migration — verified identical by temporarily `git stash`-ing
+the migration and reloading for direct comparison; the observed doubled request count
+is pre-existing React 18 StrictMode dev-mode effect double-invocation, confirmed
+present identically in the pre-migration code, not a regression); selected UNIT-0001
+and confirmed Unit Detail/Stage Spine/Action Panel/Event Trace all updated correctly;
+submitted an Assembly Scan action and confirmed `refreshSelected` updated the part
+allocation, added a new event, and refreshed the unit list; toggled theme to Dark,
+reloaded, and confirmed persistence; used Reset Demo State and confirmed selection
+cleared, the injected event disappeared, and units returned to canonical order;
+resized to 390×844 and confirmed the compact-pane tab switcher correctly toggled
+between Unit Queue/Detail/Stages/Events; navigated to `/#/variants` (via a hard
+reload, since same-document hash navigation does not re-trigger the route split — a
+pre-existing, already-documented D9C-1 limitation) and confirmed the shell renders,
+Current renders identically inside it, and Variant A's placeholder still shows
+"Presentation content for this view ships in a later phase." with no new factory-data
+calls triggered by switching tabs.
+
+### Incident — Verification-Script Deliverable Skipped By Worker, Fixed By Orchestrator
+
+Full detail in `ai/incidents/d9c3-verification-script-deliverable-skipped-by-worker.md`.
+Summary: task 001's worker correctly refused to create
+`scripts/verification/012-d9c-3-current-shared-view-model.sh` per its own hardcoded
+"application source only, `scripts/` is off-limits" constraint (confirmed real by
+reading `vendor/engineering-os/scripts/execution-supervisor.sh` directly — this
+applies to every worker regardless of declared `## Layer`, not something specific to
+this task). Task 002's worker independently confirmed the script was missing and
+explicitly declared its own task "unfinished," but `execute_task()`'s exit-code-only
+gate still marked both tasks `done` and the pipeline advanced to `RELEASE_APPROVED`
+anyway. This is a second, more severe instance of the same gap in
+`ai/incidents/d9c1-worker-question-not-enforced.md` (that one was a shrugged-off
+question; this one was an explicitly-failed acceptance criterion). Resolution: since
+no task-graph worker, under any layer, is ever permitted to write to `scripts/`, I
+authored `scripts/verification/012-d9c-3-current-shared-view-model.sh` directly as the
+orchestrator (the same ownership model already used for specs/recon/task files),
+ran it (8/8 PASS), and re-ran the full corpus plus invariants fresh. State was already
+`RELEASE_APPROVED` by the time this was discovered; not reset, since a task-graph
+re-run would hit the identical wall. Process change recorded: any future
+`scripts/verification/*.sh` deliverable must be authored by the orchestrator directly,
+never delegated to a task file.
+
+### Unresolved Risks / Known Limitations
+
+1. Same adapter-path gap noted in prior capabilities
+   (`ai/incidents/d9c1-worker-question-not-enforced.md`): worker prompts reference
+   `ai/execution-orchestrator.md`, which only exists vendored. Non-blocking, already
+   documented, not new.
+2. The `scripts/`-off-limits-to-workers constraint (newly confirmed explicit in this
+   node) means **any** future capability needing a new verification script must plan
+   for orchestrator-authored script creation from the start, not delegate it — see
+   incident file for the process change.
+3. Hash-only navigation to `/#/variants` from an already-loaded page does not
+   re-render (no `hashchange` listener) — pre-existing, documented D9C-1 limitation,
+   re-confirmed here, not a D9C-3 regression.
+
+### Final State
+
+`d9c-3-current-baseline-shared-view-model-migration: RELEASE_APPROVED` in
+`ai/state_registry.json`, substantively true as of the manual script fix — not merely
+mechanically true as first written by the pipeline.
+
+### Next Safe Capability
+
+D9C-4 — migrate the first actor-first variant (Attention-First) onto
+`useFactoryViewModel()`, per the operator-amended DAG recorded in
+`specs/d9c-2-shared-view-model.md`. Not executed by this capability.

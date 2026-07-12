@@ -1,27 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import type {
-  DataContractStatus,
-  FactoryEvent,
-  FactoryPart,
-  FactoryRefStd,
-  FactoryStage,
-  FactoryUnit,
-  FactoryUser,
-  HealthResponse,
-} from '../types/factory'
-import {
-  ApiError,
-  fetchDataContractStatus,
-  fetchEvents,
-  fetchHealth,
-  fetchParts,
-  fetchRefStandards,
-  fetchStages,
-  fetchUnit,
-  fetchUnits,
-  fetchUsers,
-  postResetState,
-} from '../api/factoryApi'
+import { useEffect, useState } from 'react'
+import { useFactoryViewModel } from '../view-model/useFactoryViewModel'
 import { UnitList } from './UnitList'
 import { StageSpine } from './StageSpine'
 import { UnitDetailPanel } from './UnitDetailPanel'
@@ -40,18 +18,7 @@ export function FactoryFlowBoard() {
 
   const toggleTheme = () => setTheme(t => (t === 'light' ? 'dark' : 'light'))
 
-  const [health, setHealth] = useState<HealthResponse | null>(null)
-  const [contractStatus, setContractStatus] = useState<DataContractStatus | null>(null)
-  const [stages, setStages] = useState<FactoryStage[]>([])
-  const [units, setUnits] = useState<FactoryUnit[]>([])
-  const [events, setEvents] = useState<FactoryEvent[]>([])
-  const [users, setUsers] = useState<FactoryUser[]>([])
-  const [parts, setParts] = useState<FactoryPart[]>([])
-  const [refStandards, setRefStandards] = useState<FactoryRefStd[]>([])
-  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
-  const [selectedUnit, setSelectedUnit] = useState<FactoryUnit | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [resetting, setResetting] = useState(false)
+  const vm = useFactoryViewModel()
 
   // D8C — compact-width (<1024px) active pane. Irrelevant at lg+ where all
   // regions render simultaneously per the existing desktop layout.
@@ -59,82 +26,8 @@ export function FactoryFlowBoard() {
     'detail',
   )
 
-  const loadAll = useCallback(async () => {
-    setLoadError(null)
-    try {
-      const [h, cs, st, us, ev, usr, pts, refs] = await Promise.all([
-        fetchHealth(),
-        fetchDataContractStatus(),
-        fetchStages(),
-        fetchUnits(),
-        fetchEvents(),
-        fetchUsers(),
-        fetchParts(),
-        fetchRefStandards(),
-      ])
-      setHealth(h)
-      setContractStatus(cs)
-      setStages(st)
-      setUnits(us)
-      setEvents(ev)
-      setUsers(usr)
-      setParts(pts)
-      setRefStandards(refs)
-    } catch (e: unknown) {
-      const msg = e instanceof ApiError ? `HTTP ${e.status}: ${e.message}` : String(e)
-      setLoadError(msg)
-    }
-  }, [])
-
-  useEffect(() => {
-    void loadAll()
-  }, [loadAll])
-
-  const refreshSelected = useCallback(async () => {
-    if (!selectedUnitId) return
-    try {
-      const [u, evts, us] = await Promise.all([
-        fetchUnit(selectedUnitId),
-        fetchEvents(),
-        fetchUnits(),
-      ])
-      setSelectedUnit(u)
-      setEvents(evts)
-      setUnits(us)
-    } catch {
-      // silent — unit may have been reset
-    }
-  }, [selectedUnitId])
-
-  const selectUnit = useCallback(
-    async (id: string) => {
-      setSelectedUnitId(id)
-      try {
-        const u = await fetchUnit(id)
-        setSelectedUnit(u)
-      } catch {
-        setSelectedUnit(null)
-      }
-    },
-    [],
-  )
-
-  const handleReset = useCallback(async () => {
-    setResetting(true)
-    try {
-      await postResetState()
-      setSelectedUnitId(null)
-      setSelectedUnit(null)
-      await loadAll()
-    } catch {
-      /* ignore */
-    } finally {
-      setResetting(false)
-    }
-  }, [loadAll])
-
-  const healthOk = health?.status === 'ok'
-  const contractOk = contractStatus?.status === 'ok'
+  const healthOk = vm.health?.status === 'ok'
+  const contractOk = vm.contractStatus?.status === 'ok'
 
   return (
     <div
@@ -164,7 +57,7 @@ export function FactoryFlowBoard() {
             />
             <span className="t-on-surface-var">Backend</span>
             <span className={healthOk ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-              {health ? health.status : '…'}
+              {vm.health ? vm.health.status : '…'}
             </span>
           </div>
 
@@ -175,22 +68,22 @@ export function FactoryFlowBoard() {
             />
             <span className="t-on-surface-var">Data Contract</span>
             <span className={contractOk ? 'text-green-600 font-medium' : 'text-amber-600 font-medium'}>
-              {contractStatus ? `${contractStatus.stage_count} stages / ${contractStatus.unit_count} units` : '…'}
+              {vm.contractStatus ? `${vm.contractStatus.stage_count} stages / ${vm.contractStatus.unit_count} units` : '…'}
             </span>
           </div>
 
           {/* Error */}
-          {loadError && (
-            <span className="t-on-error text-sm">Error: {loadError}</span>
+          {vm.loadError && (
+            <span className="t-on-error text-sm">Error: {vm.loadError}</span>
           )}
 
           {/* Reset */}
           <button
-            onClick={() => void handleReset()}
-            disabled={resetting}
+            onClick={() => void vm.resetDemoState()}
+            disabled={vm.resetting}
             className="touch-target-primary inline-flex items-center justify-center px-4 rounded border b-outline surf hover-surf-low text-sm t-on-surface font-medium disabled:opacity-50 transition-colors"
           >
-            {resetting ? 'Resetting…' : 'Reset Demo State'}
+            {vm.resetting ? 'Resetting…' : 'Reset Demo State'}
           </button>
 
           {/* Theme toggle */}
@@ -245,14 +138,14 @@ export function FactoryFlowBoard() {
           className={`${compactPane === 'unit' ? 'flex' : 'hidden'} lg:flex flex-1 min-h-0 lg:flex-none flex-col border-r-0 lg:border-r b-outline-var overflow-y-auto p-3 w-full lg:w-56 xl:w-64 min-[1600px]:w-72`}
         >
           <div className="text-xs font-semibold uppercase tracking-widest t-on-surface-var mb-3">
-            Unit Queue ({units.length})
+            Unit Queue ({vm.units.length})
           </div>
           <UnitList
-            units={units}
-            selectedId={selectedUnitId}
+            units={vm.units}
+            selectedId={vm.selectedUnitId}
             onSelect={(id) => {
               setCompactPane('detail')
-              void selectUnit(id)
+              void vm.selectUnit(id)
             }}
           />
         </div>
@@ -263,13 +156,13 @@ export function FactoryFlowBoard() {
         >
           <div className="text-xs font-semibold uppercase tracking-widest t-on-surface-var mb-3">
             14-Stage Production Spine
-            {selectedUnit && (
+            {vm.selectedUnit && (
               <span className="ml-2 t-primary normal-case font-normal">
-                · {selectedUnit.id}
+                · {vm.selectedUnit.id}
               </span>
             )}
           </div>
-          <StageSpine stages={stages} selectedUnit={selectedUnit} />
+          <StageSpine stages={vm.stages} selectedUnit={vm.selectedUnit} />
         </div>
 
         {/* Detail + Action */}
@@ -281,7 +174,7 @@ export function FactoryFlowBoard() {
             <div className="text-xs font-semibold uppercase tracking-widest t-on-surface-var mb-3">
               Unit Detail
             </div>
-            <UnitDetailPanel unit={selectedUnit} />
+            <UnitDetailPanel unit={vm.selectedUnit} />
           </div>
 
           {/* Action Panel */}
@@ -290,10 +183,10 @@ export function FactoryFlowBoard() {
               Action Panel
             </div>
             <ActionPanel
-              unit={selectedUnit}
-              users={users}
-              refStandards={refStandards}
-              onActionComplete={() => void refreshSelected()}
+              unit={vm.selectedUnit}
+              users={vm.users}
+              refStandards={vm.refStandards}
+              onActionComplete={() => void vm.refreshSelected()}
             />
           </div>
         </div>
@@ -306,7 +199,7 @@ export function FactoryFlowBoard() {
         <div className="text-xs font-semibold uppercase tracking-widest t-on-surface-var mb-3">
           Event Trace
         </div>
-        <EventTrace events={events} selectedUnitId={selectedUnitId} />
+        <EventTrace events={vm.events} selectedUnitId={vm.selectedUnitId} />
       </div>
     </div>
   )

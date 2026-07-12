@@ -26,5 +26,9 @@
   "d9c-2-shared-view-model": {
     "state": "RELEASE_APPROVED",
     "updated_at": "2026-07-11T19:54:21Z"
+  },
+  "d9c-3-current-baseline-shared-view-model-migration": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-12T20:26:19Z"
   }
 }
