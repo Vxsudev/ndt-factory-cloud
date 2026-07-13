@@ -30,5 +30,17 @@
   "d9c-3-current-baseline-shared-view-model-migration": {
     "state": "RELEASE_APPROVED",
     "updated_at": "2026-07-12T20:26:19Z"
+  },
+  "d9c-4-attention-first-actor-views": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-12T21:09:15Z"
+  },
+  "d9c-5-workflow-first-actor-views": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-12T22:32:45Z"
+  },
+  "d9c-6-command-center-actor-views": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-13T01:35:03Z"
   }
 }

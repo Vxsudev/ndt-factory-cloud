@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { FactoryFlowBoard } from '../FactoryFlowBoard'
-import { VariantPlaceholderPane } from './VariantPlaceholderPane'
+import { AttentionFirstView } from './attention-first/AttentionFirstView'
+import { WorkflowFirstView } from './workflow-first/WorkflowFirstView'
+import { CommandCenterView } from './command-center/CommandCenterView'
 
 type TabId = 'current' | 'variantA' | 'variantB' | 'variantC'
 
@@ -36,15 +38,9 @@ export function VariantReviewShell() {
         })}
       </div>
       {activeTab === 'current' && <FactoryFlowBoard />}
-      {activeTab === 'variantA' && (
-        <VariantPlaceholderPane variantId="variantA" variantLabel="Variant A — Attention-First" />
-      )}
-      {activeTab === 'variantB' && (
-        <VariantPlaceholderPane variantId="variantB" variantLabel="Variant B — Workflow-First" />
-      )}
-      {activeTab === 'variantC' && (
-        <VariantPlaceholderPane variantId="variantC" variantLabel="Variant C — Command-Center" />
-      )}
+      {activeTab === 'variantA' && <AttentionFirstView />}
+      {activeTab === 'variantB' && <WorkflowFirstView />}
+      {activeTab === 'variantC' && <CommandCenterView />}
     </div>
   )
 }

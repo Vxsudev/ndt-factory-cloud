@@ -1695,3 +1695,823 @@ mechanically true as first written by the pipeline.
 D9C-4 — migrate the first actor-first variant (Attention-First) onto
 `useFactoryViewModel()`, per the operator-amended DAG recorded in
 `specs/d9c-2-shared-view-model.md`. Not executed by this capability.
+
+---
+
+### 2026-07-12
+
+### Feature
+
+d9c-4-attention-first-actor-views
+
+### Phase
+
+phase-ui
+
+### Spec
+
+specs/d9c-4-attention-first-actor-views.md
+
+### Tasks
+
+
+- tasks/d9c-4-attention-first-actor-views-001.md [frontend]
+- tasks/d9c-4-attention-first-actor-views-002.md [verification]
+
+### Implementation Notes
+
+Executed by execution-supervisor.sh at 2026-07-12T21:09:15Z.
+All 2 tasks completed. Verification passed.
+
+### Pattern Updates
+
+None.
+
+### Incidents
+
+None.
+
+---
+
+## D9C-4 Addendum — Attention-First Actor Views (full detail)
+
+### Architectural Reasoning
+
+Recon (`ai/recon/d9c-4-attention-first-actor-views.md`) found no `Conflict: STOP`
+condition — every data gap the directive anticipated (actor identity, corrective
+instructions, live telemetry, secondary info) was resolved by scoping the design down
+to what `FactoryUnit`'s canonical fields truthfully support, per the directive's own
+instruction not to fabricate. Key resolutions: the Assembler's "current unit" is a
+manually-focused unit (`vm.selectedUnit`/`vm.selectUnit`, identical mechanism to
+Current) rather than an invented personal-assignment lookup; `blocked_reason` is shown
+via a mechanical reformat, not an authored instruction table; no live-activity badge
+was built (no such telemetry exists); `ActionPanel.tsx` was deliberately **not** reused
+as a child, despite the directive allowing it, because it unconditionally renders raw
+endpoint-path text and a generic "Dev — Backend-Guarded Transition" panel — both
+explicitly forbidden for actor-first views. New, minimal action affordances
+(`AttentionActionForm.tsx`) were built instead, calling the same unmodified
+`factoryApi.ts` functions directly.
+
+### Files Modified / Created
+
+New: `frontend/src/components/variant-review/attention-first/{AttentionFirstView,
+AssemblerView,FloorManagerView,AttentionActionForm}.tsx`,
+`scripts/verification/013-d9c-4-attention-first-actor-views.sh` (orchestrator-authored).
+Modified: `frontend/src/components/variant-review/VariantReviewShell.tsx` (only the
+`variantA` branch — confirmed via `git diff`, 5 lines changed).
+
+### Truth-to-Presentation Decisions
+
+Attention derivation: `blocked_reason != null && !package_ship_status.terminal` —
+single-tier, no fabricated severity. Corrective-action mapping: stage 5 (reallocate),
+stage 10 not-cap-exceeded (calibration retry), stage 10 cap-exceeded (disposition:
+route-back/quarantine/scrap), stage 12 (cloud-backup retry) — all reusing
+`ActionPanel.tsx`'s own request shapes and demo-actor-id defaults. Stage 5 and
+cap-exceeded stage 10 are Floor-Manager-triage-only (matching `ActionPanel.tsx`'s own
+"(supervisor+)" field labels and D9B's narrative); stage 12 is the one action also
+exposed directly in the Assembler's interrupt state. Stage 7 (and any unmapped stage)
+correctly shows "no action available" / "needs floor manager approval" — no fabricated
+button.
+
+### Worker/Orchestrator Ownership Split — Clean This Time
+
+Both task 001 and task 002 correctly respected the process change from
+`ai/incidents/d9c3-verification-script-deliverable-skipped-by-worker.md`: task 001's
+dispatch and its own summary explicitly noted `scripts/` is off-limits and did not
+attempt to author a verification script; task 002 explicitly deferred
+`scripts/verification/013-*.sh` creation to the orchestrator rather than trying (or
+silently skipping the check). No repeat of the D9C-3 gap.
+
+### Verification-Script Authorship
+
+`scripts/verification/013-d9c-4-attention-first-actor-views.sh` authored directly by
+the orchestrator, per the established process change. First draft had two real bugs,
+both caught and fixed before relying on it: (1) a check for "no free-text actor-ID
+field" false-matched the `activeActor`/`actorId` UI-switcher variable names, unrelated
+to any editable field — narrowed the pattern to the actual telltale signs (`"Actor User
+ID"` label text / non-literal `actor_user_id:` assignment); (2) three checks used a
+bare `grep ...; then a separate _check "$?"` pattern that, under `set -e`, aborted the
+script silently at the first case-sensitivity mismatch (grep was case-sensitive against
+"Needs floor manager approval" which is capitalized in the source) rather than
+recording a clean FAIL — rewrote every check as a self-contained `if/then/else` so a
+failing grep is handled explicitly, never trips `set -e` unexpectedly. Final script:
+18/18 PASS.
+
+### Invariant / Adapter Status
+
+`bash scripts/invariant-check.sh` — 6/6 PASS, run at pre-execution, pre-verification,
+and again fresh after the docker-image-rebuild incident below.
+
+### Verification Results (actual, independently re-run)
+
+Full `scripts/verification/001`–`013` corpus: 0 FAIL across all 13 scripts (011's
+Playwright browser-launch sub-check SKIPs gracefully, as on `main`). New `013` script:
+18/18 PASS.
+
+### Incident — Frontend Docker Image Not Rebuilt (stale live-verification target)
+
+`docker-compose.yml`'s `frontend` service has **no volume mount** — it is built once
+from `frontend/Dockerfile`'s `COPY . .` and never re-synced with host source edits.
+`docker inspect` confirmed zero mounts on the running container. This meant every
+"live Playwright verification" earlier in this session (D9C-1, D9C-3) was, in
+retrospect, running against whatever source happened to be baked into the image at
+last build/rebuild time — for D9C-1 this coincided with a build shortly after D9C-1's
+files were created, and for D9C-3 the verification couldn't actually distinguish
+old-vs-new code because D9C-3 was a behavior-preserving refactor (identical rendered
+output either way) — the correctness claim for D9C-3 rested on the direct source-file
+read, not on the browser test proving which code path ran. D9C-4 made this gap visible
+for the first time because it adds genuinely new, different rendered content: the
+Attention-First tab kept showing the old placeholder text even after a container
+**restart** (restart re-runs `npm run dev` against the same stale baked copy, it does
+not re-copy source). Root-caused via `docker inspect ... --format '{{json .Mounts}}'`
+returning `[]` and comparing the served file's `Last-Modified` header (predating all of
+D9C-2/3/4) against the actual file's content on disk. **Fix**: `docker compose build
+frontend && docker compose up -d --force-recreate frontend` — confirmed via a fresh
+`curl` of the served module that it now includes `AttentionFirstView`. Re-ran the full
+verification corpus post-rebuild (all still 0 FAIL) before resuming browser testing.
+**Process implication for all future D9C nodes**: live Playwright verification must
+rebuild the frontend image first (`docker compose build frontend && docker compose up
+-d --force-recreate frontend`) before trusting `localhost:5173` to reflect current
+source — this was not previously known or documented in this repo.
+
+### Incident — Backend Transient Unresponsiveness (recovered, not a code regression)
+
+Mid-verification, `http://localhost:8000/health` began timing out (TCP connect
+succeeded per `nc`, but no HTTP response within 10s) while CPU/memory on the container
+were idle (~0%). `docker compose logs postgres` showed repeated `LOG: skipping analyze
+of ... --- lock not available` entries around the same window, consistent with a
+stuck/long-held lock rather than a crash. Recovered cleanly via `docker compose restart
+backend` (health returned immediately after); re-ran `postResetState` and the full
+verification corpus afterward — 0 FAIL, no data loss (Postgres container itself was
+never restarted). Not attributable to D9C-4's code (confirmed via diff that no
+backend/data file was touched by this capability) — most likely triggered by the rapid
+sequence of manual reset/action calls issued back-to-back during interactive
+verification. Documented for awareness; no code or process change required, since this
+is an environment/load condition, not a defect in the shipped capability.
+
+### Unresolved Risks / Known Limitations
+
+1. Same adapter-path gap noted in prior capabilities
+   (`ai/incidents/d9c1-worker-question-not-enforced.md`) — non-blocking, not re-observed
+   as an issue this node (both workers stayed correctly in scope).
+2. `FloorManagerView`'s `TriageRow` "Resolve" disclosure renders nothing (not a message)
+   for a blocked unit with no defined corrective action (e.g. a hypothetical stage-7
+   unit reaching Floor Manager triage) — `AttentionActionForm` correctly returns `null`
+   in that case, but no explicit "no action available" text fills the gap the way
+   `AssemblerView`'s interrupt state does. Not a truthfulness violation (no fabricated
+   button appears), but a minor UX polish gap worth closing in a future pass.
+3. The frontend Docker image must be rebuilt before any future live verification
+   session — see incident above. This is now a required step, not previously
+   documented.
+4. `npm run build` still fails on pre-existing, unrelated errors in `src/api.ts`,
+   `src/api/factoryApi.ts`, `src/components/DataContractStatus.tsx` (`ImportMeta.env`
+   typing) and unused-variable lint errors in `ActionPanel.tsx`/`FactoryFlowBoard.tsx` —
+   confirmed present since at least D9C-2, unrelated to and unmodified by D9C-4.
+
+### Final State
+
+`d9c-4-attention-first-actor-views: RELEASE_APPROVED` in `ai/state_registry.json`,
+independently confirmed substantively true — all four new files read directly, the
+`VariantReviewShell.tsx` diff confirmed scoped to the `variantA` branch only, and full
+functional behavior (calm state, interrupt state with and without an available
+corrective action, Floor Manager triage and disposition, actor switching, Current/
+Workflow-First/Command-Center non-regression) verified live against a freshly rebuilt
+frontend image, not merely the pipeline's own self-report.
+
+### Next Safe Capability
+
+D9C-5 — migrate Workflow-First onto `useFactoryViewModel()` (per the operator-amended
+DAG). Not executed by this capability. The `AttentionActionForm` pattern (minimal,
+declutter-first action affordances built directly on `factoryApi.ts`, bypassing
+`ActionPanel.tsx`) is available as a reference for D9C-5/D9C-6's own action surfaces.
+
+---
+
+### 2026-07-12
+
+### Feature
+
+d9c-5-workflow-first-actor-views
+
+### Phase
+
+phase-ui
+
+### Spec
+
+specs/d9c-5-workflow-first-actor-views.md
+
+### Tasks
+
+
+- tasks/d9c-5-workflow-first-actor-views-001.md [frontend]
+- tasks/d9c-5-workflow-first-actor-views-002.md [verification]
+
+### Implementation Notes
+
+Executed by execution-supervisor.sh at 2026-07-12T22:32:45Z.
+All 2 tasks completed. Verification passed.
+
+### Pattern Updates
+
+None.
+
+### Incidents
+
+None.
+
+---
+
+## D9C-5 Addendum — Workflow-First Actor Views (full detail)
+
+### Workflow-First Structural Contract / Explicit Differences From Attention-First
+
+Recon (`ai/recon/d9c-5-workflow-first-actor-views.md`) locked a structural-difference
+matrix before any implementation: Assembler uses **one persistent card** at all times —
+blocked info renders as an inline section appended within it (`{isBlocked && (...)}`),
+never a component/branch swap the way Attention-First's `AssemblerView` replaces its
+calm card with a distinct full-bleed error card. Focus changes **only** via an explicit
+tap on another unit in the strip — never automatically on blocked state. Floor
+Manager's triage list is **collapsed by default** (`triageOpen` state, `useState(false)`)
+and must be explicitly toggled open/closed, unlike Attention-First's always-rendered
+triage block. A "Secondary Info" tab (required by D9B's literal Workflow-First
+description) exists and, when opened, truthfully states order/stock/staffing data is
+unavailable — a real `/factory/orders` backend endpoint exists but is outside this
+node's approved integration surface (shared view model and `factoryApi.ts` are
+protected; no parallel fetch permitted), so it is neither wired in nor fabricated.
+
+### Truth-to-Presentation Decisions
+
+Identical underlying truth rules to D9C-4 (attention = `blocked_reason != null &&
+!terminal`, no invented actor identity/assignment, no failure-instruction lookup table,
+no live telemetry) — re-verified fresh, not assumed. Additionally: initial focus and
+"other units" strip use the same deterministic, non-personal rules as Attention-First
+(first non-terminal unit; all other non-terminal units) since these are data-truth
+rules, not forbidden shared UI code — reusing a *rule* is not reusing a *component*.
+
+### Files Modified / Created
+
+New: `frontend/src/components/variant-review/workflow-first/{WorkflowFirstView,
+AssemblerWorkflowView,FloorManagerWorkflowView,WorkflowActionForm}.tsx` (fully
+independent of `attention-first/` — zero imports between them, confirmed by direct
+read and by the new verification script). `scripts/verification/
+014-d9c-5-workflow-first-actor-views.sh` (orchestrator-authored). Modified:
+`VariantReviewShell.tsx` (`variantB` branch only — `variantA`/`variantC` and all tab
+labels untouched, confirmed via `git diff`).
+
+### Protected Surfaces Confirmed Untouched
+
+`ActionPanel.tsx`, `FactoryFlowBoard.tsx`, all four `attention-first/` files, the shared
+view-model, `factoryApi.ts`, `types/factory.ts`, all other components, all backend/
+data/vendor paths — confirmed via `git diff --stat`/`git status`, not worker say-so.
+
+### Worker/Orchestrator Ownership Split
+
+Both tasks correctly respected the D9C-3-established process change. Task 002's worker
+went further than simply deferring script authorship: it discovered that
+`scripts/verification/013-d9c-4-attention-first-actor-views.sh` (my own D9C-4 script)
+now legitimately fails against the approved D9C-5 change, correctly identified this as
+a stale check rather than a D9C-5 regression, and correctly refused to edit `scripts/`
+itself, leaving the finding for the orchestrator — exactly the intended division of
+labor.
+
+### Verification-Script Authorship
+
+`scripts/verification/014-d9c-5-workflow-first-actor-views.sh` authored directly by the
+orchestrator, including explicit structural-distinction assertions (no `isBlocked ?`
+ternary/card-swap pattern; `triageOpen` defaults `false`; zero `attention-first/`
+imports). Learned from D9C-4's script bugs — every check written as a self-contained
+`if/then/else` from the start, no bare `grep; then _check "$?"` pattern. First run:
+26/26 PASS, no fixes needed this time.
+
+### Incident — Spec Re-Triggered the D9C-1 Verification-Scripts Parser Bug
+
+The first execution-supervisor.sh run for this node failed
+(`✗ MISSING scripts/verification/014-d9c-5-workflow-first-actor-views.sh`) because my
+own D9C-5 spec's `## Verification Scripts` section, despite saying `(none)`, added a
+further explanatory "Note:" paragraph directly underneath that named the exact future
+script path — reproducing the exact naive-parser bug already documented and supposedly
+already learned from in D9C-1. Fixed by resetting state to `RECON_READY`
+(`bash scripts/state-manager.sh reset d9c-5-workflow-first-actor-views`), trimming the
+spec section back to a bare `(none)` with zero further mention, and recompiling
+(existing task files were `SKIP`ped/preserved, not regenerated — no work lost). Second
+run succeeded cleanly. No new incident file was created for this one since it is a
+precise repeat of an already-fully-documented, already-understood bug with an
+already-known fix — recorded here in the journal instead.
+
+### Incident — execution-supervisor.sh's Verification Gate Silently Only Runs 7 of 13 Scripts
+
+Full detail in `ai/incidents/d9c5-execution-supervisor-stdin-truncated-verification-loop.md`.
+Summary: investigating why script `013`'s new, legitimate failure (see above) never
+blocked the automated pipeline's own Verification Gate led to discovering that
+`execution-supervisor.sh`'s verification loop feeds all 13 script paths to a `while
+read` loop via a here-string, and `scripts/verification/007-persistence-postgres.sh`'s
+three `docker compose exec -T postgres psql ...` calls inherit that same stdin (since
+neither the loop nor the inner `bash "$vscript"` call redirects it away), draining the
+remaining queued script paths (`008`–`013`) before the outer loop ever reads them. The
+loop then exits cleanly (not an error — just EOF) having silently executed only
+`001`–`007`, despite correctly announcing "13 script(s))" up front. **This means every
+`RELEASE_APPROVED` state reached by the automated pipeline in this session, D9C-1
+through D9C-5, was only ever automatically gated on `001`–`007`**, not the full corpus
+— the only reason this never produced an undetected regression is that I have
+independently, manually re-run the complete `001`–`0NN` corpus after every single node
+this entire session, a practice that predates and is now conclusively justified by this
+finding. No fix was applied to the vendored `execution-supervisor.sh` itself (out of
+this session's authorized scope; a straightforward fix — redirecting each inner
+verification-script invocation's stdin from `/dev/null` — is documented in the incident
+file for the operator's future consideration). The immediate, real problem this
+surfaced (script `013`'s stale `variantB` assertion) was fixed directly: retired the
+half of `V10` asserting `variantB` stays a placeholder (D9C-5 legitimately changes
+this), kept the still-valid `variantC` assertion. Re-ran: 18/18 PASS.
+
+### Invariant / Adapter Status
+
+`bash scripts/invariant-check.sh` — 6/6 PASS, run at pre-execution, pre-verification,
+after the spec-bug fix and reset, after the `013` fix, and again fresh after the
+frontend image rebuild below.
+
+### Verification Results (actual, independently re-run)
+
+Full `scripts/verification/001`–`014` corpus: 0 FAIL across all 14 scripts (`011`'s
+Playwright browser-launch sub-check SKIPs gracefully, as on `main`). Exact per-script
+counts on the final, post-reset, post-rebuild re-run: 001=4/4, 002=4/4, 003=2/2,
+004=10/10, 005=26/26, 006=12/12, 007=17/17, 008=17/17, 009=18/18, 010=21/21,
+011=32/32 (+1 SKIP), 012=8/8, 013=18/18 (post-fix), 014=26/26.
+
+### Frontend Rebuild / Current-Source Proof
+
+Per the D9C-4 incident's established procedure: `docker compose build frontend &&
+docker compose up -d --force-recreate frontend`, then confirmed via `curl` of the
+served `VariantReviewShell.tsx` module that it references both `AttentionFirstView`
+and `WorkflowFirstView` before any browser assertions were trusted. Full corpus
+re-confirmed clean immediately after the rebuild.
+
+### Live Browser / Smoke-Test Evidence
+
+Assembler: verified the single persistent card layout across both a non-blocked unit
+(UNIT-0001, calm) and two blocked units (UNIT-0002 — stage 7, no available action,
+truthful "needs floor manager approval" message, no takeover; UNIT-0006 — stage 12,
+inline "Retry Cloud Backup" button) — same card structure, same "Current Unit" label,
+same position, throughout; submitted the cloud-backup retry live against the backend
+and confirmed the unit advanced to Package with the blocked section simply
+disappearing from the same card (no re-render swap). Floor Manager: confirmed the
+queue is always rendered, the attention badge defaults collapsed ("2 need attention —
+tap to view"), expands in place on tap ("tap to collapse") without displacing the
+queue, resolved UNIT-0004's calibration-cap-exceeded disposition via "Quarantine" and
+confirmed the resulting real backend state (unit shows `quarantined` status, a genuine
+new `WARNING`-severity event appears in Current's own Event Trace — same shared state,
+zero duplicate orchestration confirmed via file-level checks). Verified the Secondary
+Info tab shows the honest "not available" message with no fabricated numbers. Verified
+Command-Center (`variantC`) remains an untouched placeholder throughout. Reset demo
+state at the end and confirmed canonical seed data was fully restored with zero
+residue (unit statuses, event count, and stage numbers all matched the known clean
+baseline).
+
+### Backend Mutation-Test / Reset Confirmation
+
+Testing was paced (one action at a time, result confirmed before the next) per the
+recon's backend-lock-contention avoidance procedure — no hang recurred this node.
+`postResetState` confirmed 200 OK; canonical state re-verified via a fresh Current-tab
+snapshot and the final full-corpus re-run above.
+
+### Typecheck / Lint Baseline Comparison
+
+Task 001's worker ran `tsc --noEmit` in the project's ephemeral Docker container (per
+the runtime contract) and confirmed only the same pre-existing, already-documented
+baseline errors appear (`src/api.ts`, `src/api/factoryApi.ts`, `ActionPanel.tsx`,
+`DataContractStatus.tsx`) — zero new errors originate from any `workflow-first/` file.
+Consistent with the identical baseline observed at D9C-2/D9C-3/D9C-4.
+
+### Unresolved Risks / Known Limitations
+
+1. Same adapter-path gap noted in every prior capability
+   (`ai/incidents/d9c1-worker-question-not-enforced.md`) — non-blocking, not
+   re-observed as an issue this node.
+2. The `execution-supervisor.sh` stdin-truncation defect (see incident above) remains
+   present in the vendored runtime — every future D9C node must continue the
+   established practice of an independent, manual full-corpus re-run after the
+   automated pipeline reports "Verification: pass," since that self-report is now
+   confirmed to only reflect scripts `001`–`007`.
+3. Same pre-existing `tsc`/lint baseline noted since D9C-2, confirmed still unrelated
+   to and unmodified by this node.
+4. `FloorManagerWorkflowView`'s "Quarantine"/"Scrap"/"Route back to hardware"
+   dispositions do not clear a unit's blocked/attention state (by real backend design —
+   quarantine and scrap are terminal-like dispositions, not fixes) — confirmed correct,
+   truthful behavior via live testing, not a defect, but worth noting for anyone
+   comparing triage-list item counts before/after a disposition action.
+
+### Final State
+
+`d9c-5-workflow-first-actor-views: RELEASE_APPROVED` in `ai/state_registry.json`,
+substantively confirmed — all four new files read directly, structural-distinction
+requirements verified both statically (new `014` script) and live (browser evidence),
+`VariantReviewShell.tsx` diff scoped correctly, and the stale `013` script fixed so the
+full corpus is genuinely green, not just mechanically reported so.
+
+### Next Safe Capability
+
+D9C-6 — implement Command-Center (`variantC`), the last of the three actor-first
+variants, onto the shared view model. Not executed by this capability.
+
+---
+
+### 2026-07-13
+
+### Feature
+
+d9c-6-command-center-actor-views
+
+### Phase
+
+phase-ui
+
+### Spec
+
+specs/d9c-6-command-center-actor-views.md
+
+### Tasks
+
+
+- tasks/d9c-6-command-center-actor-views-001.md [frontend]
+- tasks/d9c-6-command-center-actor-views-002.md [verification]
+
+### Implementation Notes
+
+Executed by execution-supervisor.sh at 2026-07-13T01:35:03Z.
+All 2 tasks completed. Verification passed.
+
+### Pattern Updates
+
+None.
+
+### Incidents
+
+None.
+
+---
+
+## D9C-6 Addendum — Command-Center Actor Views (full detail)
+
+### Command-Center Structural Contract / Differences From Current, Attention-First, and Workflow-First
+
+Recon (`ai/recon/d9c-6-command-center-actor-views.md` §6) locked a four-way comparison
+matrix before implementation. Command-Center's signature, confirmed both statically
+(new `015` script) and live: **all actor-relevant regions render simultaneously, in one
+persistent screen, with no takeover and no required expand/tab step for primary
+context.** Concretely — Assembler: an Attention banner appears only when the focused
+unit is blocked, but the Current Unit and Other Units regions remain rendered
+regardless (contrast Attention-First's full takeover, which replaces the calm card
+entirely). Floor Manager: the Attention/Triage region renders directly whenever
+`blockedUnits.length > 0` — no `triageOpen`-style toggle gates its existence (contrast
+Workflow-First, which requires an explicit tap to expand); Queue and Secondary Context
+are both always rendered, with Secondary Context never behind a tab (contrast
+Workflow-First's separate "Secondary Info" tab). Supporting Detail (Assembler-only) is
+a genuinely collapsed-by-default native `<details>` — distinct from `UnitDetailPanel.tsx`'s
+markup-only-disclosure precedent (which defaults open) and from neither other variant
+having an equivalent region at all. No full 14-stage spine was reproduced anywhere.
+
+### Files Modified / Created
+
+New: `frontend/src/components/variant-review/command-center/{CommandCenterView,
+AssemblerCommandView,FloorManagerCommandView,CommandCenterActionForm}.tsx` — fully
+independent of both `attention-first/` and `workflow-first/` (zero cross-imports,
+confirmed by direct read and by the new verification script). `scripts/verification/
+015-d9c-6-command-center-actor-views.sh` (orchestrator-authored). Modified:
+`VariantReviewShell.tsx` (`variantC` branch only — diffed against the last commit,
+which predates D9C-4/5/6, so the diff shows all three variants' wiring together;
+`013`/`014`'s own passing assertions independently confirm `variantA`/`variantB`
+wiring and all tab labels are unchanged). Two narrow, pre-authorized fixes:
+`scripts/verification/013-d9c-4-attention-first-actor-views.sh` and `014-d9c-5-workflow-first-actor-views.sh`
+each had their one stale `variantC`-stays-a-placeholder assertion removed — every
+other check in each script is untouched and still passing (13: 17/17 PASS; 14: 25/25
+PASS, post-fix).
+
+### Assembler / Floor Manager Persistent-Region Maps
+
+Assembler: Attention banner (conditional presence) → Current Unit (always) → Other
+Units (always) → Supporting Detail (always present, collapsed by default). Floor
+Manager: Attention/Triage (rendered directly when non-empty) → Queue (always) →
+Secondary Context (always, visually subordinate, honest "not available" content).
+
+### Attention Derivation / Focused-Unit / Queue-Grouping Rules
+
+Identical, reused data-truth rules to both completed variants: `blocked_reason !=
+null && !terminal`; first non-terminal unit as initial focus, changed only via
+explicit `vm.selectUnit` taps; queue sorted by `current_stage_number`. Reusing these
+*rules* (not component code) across all three variants is consistent with sharing
+truth-derivation while keeping presentation independent, per this session's
+established distinction.
+
+### Unavailable Secondary-Information Handling
+
+Same finding as D9C-5: a real `/factory/orders` endpoint exists but is outside this
+node's approved integration surface (shared view model / `factoryApi.ts` protected).
+Command-Center's Secondary Context region is a real, always-visible UI element (not a
+tab) whose content honestly states order/stock/staffing data is unavailable — no
+fetch call, no fabricated numbers.
+
+### Action Architecture / Shared-View-Model Ownership / Variant-Local State
+
+`CommandCenterActionForm.tsx` independently implements the same stage-to-action
+mapping as both completed variants (stage 5/10/12), calling the same unmodified
+`factoryApi.ts` functions — not imported from either sibling directory, per the
+directive's explicit "no silently combine Attention-First and Workflow-First
+components" instruction. `CommandCenterView` calls `useFactoryViewModel()` exactly
+once; `activeActor` and the Supporting Detail disclosure state are the only
+variant-local presentation state.
+
+### Protected Surfaces Confirmed Untouched
+
+`ActionPanel.tsx`, `FactoryFlowBoard.tsx`, all eight `attention-first/`/`workflow-first/`
+files, the shared view-model, `factoryApi.ts`, `types/factory.ts`, all other
+components, all backend/data/vendor paths — confirmed via `git diff --stat`/`git
+status`, not worker say-so.
+
+### Worker/Orchestrator Ownership Split
+
+Both tasks correctly respected the established process change. Task 002's worker
+correctly anticipated and pre-flagged the expected `013`/`014` stale-assertion
+failures as non-blocking (not a D9C-6 regression) without attempting to fix `scripts/`
+itself — exactly the intended division of labor, now proven across three consecutive
+nodes (D9C-4 clean, D9C-5 caught the D9C-4 staleness, D9C-6 caught and correctly
+handled its own two predecessor stalenesses).
+
+### Verification-Script Authorship / Predecessor Fixups
+
+`scripts/verification/015-d9c-6-command-center-actor-views.sh` authored directly by
+the orchestrator: 28/28 PASS on first run, no bugs this time (every check written as a
+self-contained `if/then/else` from the start, per the lesson from D9C-4's script
+bugs). The two narrow predecessor fixes (`013`/`014` stale `variantC` assertions) were
+made directly by the orchestrator, never delegated — both re-ran clean immediately
+after (`013`: 17/17, `014`: 25/25).
+
+### Manual Full-Corpus Verification (per the D9C-5 stdin-drain incident)
+
+Ran every discovered `scripts/verification/[0-9][0-9][0-9]-*.sh` in a plain shell
+`for` loop, explicitly redirecting each script's stdin from `/dev/null` (not shared
+with the loop's own input) and printing each filename with its individual exit code —
+proof, independent of `execution-supervisor.sh`'s own (confirmed-defective) loop, that
+every script from `001` through `015` actually executed. One shell-scripting pitfall
+hit and fixed immediately: the loop variable was initially named `status`, which
+collides with zsh's read-only built-in `$status` — renamed to `rc`. Full results (run
+twice — once right after the fixes, once fresh after the frontend rebuild, once more
+after the final demo reset): 001=4/4, 002=4/4, 003=2/2, 004=10/10, 005=26/26,
+006=12/12, 007=17/17, 008=17/17, 009=18/18, 010=21/21, 011=32/32 (+1 SKIP), 012=8/8,
+013=17/17 (post-fix), 014=25/25 (post-fix), 015=28/28. All 15 scripts, individually
+confirmed — including every script after `007`.
+
+### Invariant / Adapter Status
+
+`bash scripts/invariant-check.sh` — 6/6 PASS, run at pre-execution, pre-verification,
+after the two predecessor-script fixes, after the frontend rebuild, and again after
+the final demo reset.
+
+### Frontend Rebuild / Current-Source Proof
+
+`docker compose build frontend && docker compose up -d --force-recreate frontend`,
+then confirmed via `curl` of the served `VariantReviewShell.tsx` module that it
+references `AttentionFirstView`, `WorkflowFirstView`, **and** `CommandCenterView`
+before any browser assertion was trusted. Full corpus re-confirmed clean immediately
+after.
+
+### Live Browser / Smoke-Test Evidence
+
+Assembler: confirmed all four regions render together for both a non-blocked unit
+(UNIT-0001) and a blocked one (UNIT-0002, stage 7 — Attention banner appeared above
+the still-visible Current Unit and Other Units regions, no takeover); expanded
+Supporting Detail and confirmed part-allocation content; selected UNIT-0006 (stage 12)
+and executed a live "Retry Cloud Backup" action — unit advanced to Package, Attention
+banner disappeared, other regions persisted unchanged. Floor Manager: confirmed
+Attention ("2 need resolution"), Queue, and Secondary Context all rendered together
+with no toggle/tab; resolved UNIT-0004's calibration-cap-exceeded disposition via
+"Route back to hardware" and confirmed the queue re-sorted live with the attention
+count dropping to 1, Secondary Context remaining visible throughout. Confirmed both
+real backend mutations (cloud-backup retry, hardware-routing disposition) appeared
+identically in Current's own Event Trace and in both Attention-First's and
+Workflow-First's unit lists after switching tabs — same shared truth, zero duplicate
+orchestration. Confirmed Attention-First and Workflow-First remain fully unchanged and
+functionally distinct from Command-Center and from each other. Reset demo state at the
+end and confirmed canonical seed data was fully restored with zero residue.
+
+### Backend Mutation-Test / Reset Confirmation
+
+Testing was paced (one action at a time, result confirmed before the next), per the
+established discipline from D9C-4/D9C-5 — no lock-contention hang recurred this node.
+`postResetState` confirmed 200 OK; canonical state re-verified via a fresh Current-tab
+snapshot and the final manual full-corpus re-run above.
+
+### TypeScript / Lint Baseline Comparison
+
+Both tasks' workers ran `tsc --noEmit` in ephemeral containers and confirmed only the
+same pre-existing, already-documented baseline errors appear (`src/api.ts`,
+`src/api/factoryApi.ts`, `ActionPanel.tsx`, `DataContractStatus.tsx`) — zero new
+errors originate from any `command-center/` file. Consistent with the identical
+baseline observed at D9C-2 through D9C-5.
+
+### Unresolved Risks / Known Limitations
+
+1. Same adapter-path gap noted in every prior capability
+   (`ai/incidents/d9c1-worker-question-not-enforced.md`) — non-blocking, not
+   re-observed as an issue this node.
+2. The `execution-supervisor.sh` stdin-truncation defect
+   (`ai/incidents/d9c5-execution-supervisor-stdin-truncated-verification-loop.md`)
+   remains present in the vendored runtime — this node's manual, non-supervisor-loop
+   full-corpus re-run (with explicit per-script stdin redirection) is now the
+   established, required practice for every future D9C node, not merely a
+   precautionary habit.
+3. Same pre-existing `tsc`/lint baseline noted since D9C-2, confirmed still unrelated
+   to and unmodified by this node.
+4. All three functional actor-first comparison variants (Attention-First,
+   Workflow-First, Command-Center) now exist side-by-side with Current. None of D9C-1
+   through D9C-6's work is committed to git yet (only D9C-1 through D9C-3 are on
+   `origin/main`) — an open question for the operator, not a blocker to this
+   capability's own completion.
+
+### Final State
+
+`d9c-6-command-center-actor-views: RELEASE_APPROVED` in `ai/state_registry.json`,
+substantively confirmed — all four new files read directly, the required three-way
+structural distinction verified both statically (new `015` script) and live (browser
+evidence), `VariantReviewShell.tsx` diff scoped correctly, the two predecessor scripts'
+stale assertions fixed narrowly, and all 15 verification scripts individually,
+manually confirmed passing — not merely inferred from the supervisor's own
+(confirmed-partial) report.
+
+### Next Serialized Node
+
+None serialized by this capability. All three D9B-specified functional actor-first
+variants (Attention-First, Workflow-First, Command-Center) are now complete and
+available for operator/Vijay comparison against Current, fulfilling the original D9B
+"three functional options, presented together" instruction. Any further step
+(selection, production-UI adoption, additional iteration, or committing the
+accumulated work) is an operator decision, not executed by this capability.
+
+---
+
+## Post-Release Code-Review Remediation — Serialized Reallocation & Dead-Resolve Fixes
+
+### Original Reviewed Commit
+
+`b6d1e8f` (`feat(factory-ui): implement three actor-first comparison variants`) — the
+original D9C-4/D9C-5/D9C-6 commit, reviewed after all three capabilities had already
+reached `RELEASE_APPROVED`.
+
+### Review Finding 1 — Broken Serialized Reallocation
+
+All three variant action forms (`AttentionActionForm.tsx`, `WorkflowActionForm.tsx`,
+`CommandCenterActionForm.tsx`) sent `old_serial_number: ''` in the stage-5 reallocation
+payload. The backend's `reallocate_part` resolves `old_serial_number` through
+`parts_by_serial` (`backend/app/state_store.py:117-119`); an empty string never
+resolves, so the call would always fail with a 422. This violated the serialized
+traceability contract — the whole point of the reallocation action is to record which
+specific, real serialized part is being swapped out.
+
+### Review Finding 2 — Dead Resolve Interaction
+
+All three Floor Manager triage implementations (`FloorManagerView.tsx`,
+`FloorManagerWorkflowView.tsx`, `FloorManagerCommandView.tsx`) rendered a "Resolve"
+button unconditionally for every blocked unit, revealing the corresponding
+`*ActionForm` component. For a blocked unit at a stage with no defined action mapping
+(e.g. stage 7 — genuinely no actor-available action, per the original D9C-4 recon),
+the action form correctly returns `null` — but the triage row still showed a clickable
+"Resolve" control that, once tapped, revealed an empty region. This was flagged, but
+not actually fixed, in the original D9C-4 journal addendum's "Unresolved Risks" §2 —
+this remediation closes that gap for real.
+
+### Corrected Implementation
+
+- `findAffectedAllocation(unit, parts)` (added to all three `*ActionForm.tsx` files,
+  independently implemented per file, not a shared import): finds the entry in
+  `unit.part_allocations` whose `status !== 'allocated_bound'`, then looks up that
+  entry's `part_id` against the `parts` array (`vm.parts`, already available on the
+  shared view model) to resolve the real `FactoryPart.serial_number`. Returns `null`
+  if no such allocation or no matching part/serial exists.
+- The stage-5 branch of each `*ActionForm` now calls `postReallocatePart` with
+  `old_serial_number: target.oldSerial` (the resolved real serial), never a literal.
+  If `findAffectedAllocation` returns `null`, the form does not render a submit
+  control at all — it shows "No serialized part could be identified for reallocation."
+  instead, so submission is blocked with truthful feedback rather than silently
+  sending garbage.
+- `hasSupportedAction(unit, parts)` (exported from each `*ActionForm.tsx`): the same
+  stage-to-action mapping used internally, returning `false` for any
+  unit/stage/condition the form would otherwise render `null` for — including the
+  stage-5 case, where it now additionally requires `findAffectedAllocation` to
+  succeed, so "supported" means "genuinely actionable," not just "the right stage
+  number."
+- Each Floor Manager triage row now calls `hasSupportedAction` before deciding what to
+  render: if `true`, the existing "Resolve" button + revealed action form (unchanged
+  behavior); if `false`, a plain "No resolution action is available in this comparison
+  view." message — no button, no dead reveal possible.
+
+### Exact Files Changed (nine application files)
+
+- `frontend/src/components/variant-review/attention-first/{AssemblerView.tsx,
+  AttentionActionForm.tsx, FloorManagerView.tsx}`
+- `frontend/src/components/variant-review/workflow-first/{AssemblerWorkflowView.tsx,
+  WorkflowActionForm.tsx, FloorManagerWorkflowView.tsx}`
+- `frontend/src/components/variant-review/command-center/{AssemblerCommandView.tsx,
+  CommandCenterActionForm.tsx, FloorManagerCommandView.tsx}`
+
+Each `Assembler*View.tsx` file's only change is threading a new `parts={vm.parts}`
+prop into its existing `*ActionForm` call site(s). Each `FloorManager*View.tsx` file's
+`TriageRow` gained the `hasSupportedAction` gate. Each `*ActionForm.tsx` gained the
+`parts` prop, `findAffectedAllocation`/`hasSupportedAction` helpers, and the corrected
+stage-5 branch.
+
+### Verification Scripts Strengthened
+
+`scripts/verification/013-d9c-4-attention-first-actor-views.sh`,
+`014-d9c-5-workflow-first-actor-views.sh`, `015-d9c-6-command-center-actor-views.sh`
+each gained two new check sections asserting: no literal `old_serial_number: ''`;
+`old_serial_number` sourced from a resolved `target.oldSerial`, itself derived from a
+real `part.serial_number` lookup; each `*ActionForm` exports `hasSupportedAction`; each
+form shows the truthful "No serialized part could be identified" message; each
+`FloorManager*View`'s `TriageRow` gates on `hasSupportedAction` with the truthful
+"No resolution action is available" fallback. Each script's pre-existing
+"protected surfaces" check also had to be narrowed (via `git diff` pathspec
+exclusions) to stop flagging the other two sibling variants' now-legitimately-shared
+fix files as unauthorized changes — a stale assumption in the same family as the
+`variantC`/`variantB` staleness already documented for D9C-5/D9C-6, not a weakening of
+what each check actually protects.
+
+### Full Manual Verification Result (001–015, outside the defective supervisor loop)
+
+Every script run individually via a plain shell loop with per-script exit codes
+recorded (per the standing practice from
+`ai/incidents/d9c5-execution-supervisor-stdin-truncated-verification-loop.md`):
+001=4/4, 002=4/4, 003=2/2, 004=10/10, 005=26/26, 006=12/12, 007=17/17, 008=17/17,
+009=18/18, 010=21/21, 011=32/32 (+1 SKIP), 012=8/8, 013=23/23, 014=31/31, 015=34/34.
+All 15 scripts exit 0.
+
+### Invariant Status
+
+`bash scripts/invariant-check.sh` — 6/6 PASS, run before and after the fix, and again
+as part of the pre-commit hook on both amend operations.
+
+### Focused Stage-5 Derivation Test
+
+Direct code-level verification, not a UI click-path test: used
+`mcp__playwright__browser_evaluate` to dynamically `import()` the served, rebuilt
+`AttentionActionForm.tsx` module and call its exported `hasSupportedAction` against
+three synthetic `FactoryUnit`/`parts` inputs — a stage-5 blocked unit with a resolvable
+allocation (`true`), the same unit with no matching part in the supplied `parts` array
+(`false`), and the same unit with `blocked_reason` cleared (`false`). All three
+results matched expectation.
+
+**Current live-seed limitation, confirmed by reading `backend/app/workflow_rules.py`
+directly**: no code path in the backend ever persists `unit["blocked_reason"]` for a
+stage-5 condition — `_scan_reject()`'s assembly hard-stops (`unknown_serial`,
+`wrong_part_type`, `already_used_serial`, `wrong_serial_for_allocated_slot`) return a
+transient `ActionResponse.blocked_reason` for that one rejected call only; they never
+write `unit["blocked_reason"]` into persistent state. Only stages 9, 10, and 12 ever
+get a persisted `blocked_reason` (`grep` of `workflow_rules.py` confirms these are the
+only three `unit["blocked_reason"] = ...` assignment sites besides the `None`-clearing
+ones). **A genuinely blocked stage-5 unit therefore cannot be produced through the live
+running application today** — the stage-5 branch in all three action forms is real,
+correct, necessary code for a condition the current backend/seed reality never
+actually creates. This is why the fix was verified via the direct function-level test
+above rather than an end-to-end click-path — no live click-path to a blocked stage-5
+unit exists to click through. The fix stands ready for whenever backend/seed data
+introduces persistent stage-5 blocking.
+
+### Unsupported-Attention Live Verification (all three variants)
+
+UNIT-0002 (stage 7, `cloud_unreachable_sw_update_cannot_proceed`, permanently blocked
+in the canonical seed with `no_override: true`) is a real, always-present, genuinely
+unsupported condition. Confirmed live, in all three variants' Floor Manager triage
+list: the row shows "No resolution action is available in this comparison view." with
+no "Resolve" button, while UNIT-0004 and UNIT-0006 (both genuinely actionable) still
+show working "Resolve" buttons that reveal their respective disposition/retry forms.
+No dead reveal was reproducible in any of the three variants after the fix.
+
+### Demo State Restoration
+
+No mutation was performed during this remediation's live verification pass (only
+navigation and read-only inspection — no action was submitted). Confirmed via a fresh
+Current-tab snapshot that canonical seed state (10 of 22 events, all seven units at
+their original scenario stages/statuses) was already intact throughout; no reset was
+necessary and none was performed.
+
+### Task Artifacts Superseded
+
+`tasks/d9c-4-attention-first-actor-views-001.md`,
+`tasks/d9c-5-workflow-first-actor-views-001.md`, and
+`tasks/d9c-6-command-center-actor-views-001.md` each instructed their worker to send
+`old_serial_number: ''` and to gate the interrupt/inline action solely on stage number,
+without a resolvability or supported-action check. Those task files are left
+unmodified — they remain accurate **historical evidence** of the flawed original
+generated instruction that produced Review Finding 1 and Review Finding 2, not a
+current implementation reference. This journal entry, not those task files, is the
+authoritative record of the corrected behavior going forward.
+
+### Final State
+
+Original commit `b6d1e8f` was amended in place (message unchanged) to fold in the nine
+corrected application files and the three strengthened verification scripts, producing
+`2643396724d005c5600423946df2115ee02c7f7d`. This journal entry was then added via a
+second amend of the same commit, producing `0388c619bbc5cd53066f6163b527a9f908ce8dfd`.
+(As with any self-describing commit, this SHA was necessarily computed *before* this
+sentence could name it — recording it here is a snapshot of the amend that just
+happened, not a fixed point; if this entry is amended again in the future, the SHA
+recorded here will describe that prior state, not the new one.) Not pushed — `main`
+remains exactly one commit ahead of `origin/main`.
