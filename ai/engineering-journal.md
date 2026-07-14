@@ -2739,4 +2739,454 @@ rewrite already-shared history.
 ### Next-Phase Handoff
 
 D9E (visual polish) is the next serialized node per
-`specs/d9d-cross-variant-parity.md` — not executed by this capability.
+`specs/d9d-cross-variant-parity.md` — not executed by this capability. **Superseded**: the operator
+re-scoped D9E as the Manufacturing Comprehension System (D9E-0 onward); see below.
+
+---
+
+## D9E-0 — Manufacturing Comprehension System Max-Depth Recon + Operator Decision Lock
+
+**Date:** 2026-07-14
+**Capability:** `d9e-0-manufacturing-comprehension-recon` (recon-only; outside the execution state
+machine throughout, per directive — no `ai/state_registry.json` entry was ever written for it)
+**Status:** `RECON_APPROVED — READY_FOR_D9E-1`
+
+### Summary
+
+Read-only, max-depth reconnaissance of the entire vendored Engineering OS, local governance, the
+full D9A–D9D artifact lineage, the complete backend/frontend/data implementation, and the
+operator-supplied manufacturing evidence (BRS, flowchart, transcript). Produced
+`ai/recon/d9e-0-manufacturing-comprehension-recon.md` (36 sections): a complete 14-stage matrix,
+a (later corrected) failure-mode catalog, recovery-path catalog, actor/authority matrix,
+terminology/design-system/screen comprehension audits, and a gap register. Core finding: the
+application's manufacturing behavior is complete and truthful, but every screen shows state without
+explaining cause, consequence, ownership, or next state; the richest explanation source
+(`stages.json`'s requirements/controls/decision-notes, already served by the API) is rendered
+nowhere; one Assembler copy line was found factually wrong for Stage-7 blocks; red flattened at
+least 7 distinct operational meanings; the variants carried no self-description of their own
+philosophies.
+
+### Operator Decision-Lock Continuation (same date, second turn)
+
+The operator reviewed the recon and locked: the screen comprehension contract (§27,
+`OPERATOR_LOCKED`, Q1–Q14 with applicability rules); a composable three-axis semantic model (§28,
+`OPERATOR_LOCKED` — Manufacturing State × Constraint × Ownership/Actionability, replacing the
+originally-proposed flat one-to-one model); all eight source conflicts C1–C8 (§25,
+`OPERATOR_RESOLVED` — gate typing, actor/authority vocabulary, Stage-8 phantom-failure exclusion,
+cloud-recovery narrative, Floor-Manager/Manager Scrap presentation, Current's scope boundary, demo-
+coverage approach, orders/recipes wiring boundary); and the extended D9E-0→D9E-7→D9F→D9G DAG (§31,
+`OPERATOR_LOCKED`, splitting the original single comprehension-audit proposal into a D9E-2
+hardening node and a D9E-7 audit node). A defect-count inconsistency (8 vs. the register's actual
+10) and a conflict-count inconsistency (4 vs. the register's actual 8) were found and corrected
+during this pass. The amended commit was later confirmed pushed (`2d2b5cf`).
+
+### Files Changed
+
+`ai/recon/d9e-0-manufacturing-comprehension-recon.md` only, across both turns. No application,
+backend, data, or governance-outside-this-file change.
+
+### Next Node
+
+D9E-1 — Canonical Stage, Failure, Recovery, and Authority Model (executed below).
+
+---
+
+## D9E-1 — Canonical Stage, Failure, Recovery, and Authority Model
+
+**Date:** 2026-07-14
+**Branch:** `main`
+**Predecessor SHA:** `2d2b5cf56d2b94168cd22bf34685f24f041f658d` (D9E-0, confirmed pushed —
+predecessor gate satisfied before this capability began)
+**Capability:** `d9e-1-canonical-manufacturing-comprehension-model`
+**Spec:** `specs/d9e-1-canonical-manufacturing-comprehension-model.md` (Status: approved, Phase:
+phase-ui)
+**Tasks:** `tasks/d9e-1-canonical-manufacturing-comprehension-model-001.md` (Layer: verification —
+the only task `generate-tasks.sh` scaffolds when Data Model/API/Frontend Surface are all declared
+`none`; its scope was widened to cover both halves of the directive's "recommended" two-task graph,
+recorded as an expected, non-conflicting deviation, not a silent shortcut)
+**Status:** `RELEASE_APPROVED`
+
+### Architectural Reasoning
+
+The directive required governed execution through the real Engineering OS pipeline
+(`compile-spec.sh` → `generate-tasks.sh` → state-machine-gated execution → orchestrator-authored
+verification → manual full-corpus re-run), which was followed literally for spec compilation, task
+generation, and every state transition (`scripts/state-manager.sh advance`, run directly by the
+orchestrator, not via a nested nested-Claude nested spawn). Task **content authorship** — the
+canonical document, the glossary, and the two documentation errata — was done directly by the
+orchestrator rather than by invoking `execution-supervisor.sh`'s headless `claude
+--dangerously-skip-permissions` worker spawn, a deliberate, disclosed deviation recorded in this
+node's own recon (§10), matching this exact repository's established precedent for every prior
+D9C/D9D node and directly motivated by two documented incidents about that mechanism's
+unreliability (`ai/incidents/d9c1-worker-question-not-enforced.md`,
+`ai/incidents/d9c3-verification-script-deliverable-skipped-by-worker.md`).
+
+### AC-4 Conflict — Discovered, Reported, Operator-Resolved (mid-execution)
+
+While canonicalizing the failure-mode catalog (task 001, Part A), a direct row-level recount of
+D9E-0 §11 found **22** distinct, independently evidence-backed entries, not the 21 asserted
+throughout D9E-0's prose and this capability's own initial spec/recon/task drafts.
+`FM-WRONG-STAGE` (action called at the wrong stage) and `FM-AUTH-INSUFFICIENT` (actor lacks
+required authority) are genuinely distinct conditions — different triggers, different raw
+codes/response shapes, different recovery paths — and had been merged into one table row during
+first drafting specifically to force the count to match the expected "21." Per this capability's
+own **AC-4** ("If evidence revalidation changes the count: STOP... report the conflict"), execution
+was halted: state left at `EXECUTION_ACTIVE`, task 001 left `in-progress`, no verification script
+authored, nothing advanced further, and the conflict reported to the operator rather than silently
+corrected.
+
+**Operator resolution:** the canonical count is **22** — confirmed as an arithmetic/catalog-counting
+error in D9E-0's original summary prose, not a new manufacturing finding; does not reopen any of
+D9E-0's C1–C8 resolutions; does not expand capability; does not authorize any backend/frontend
+change. `ai/recon/d9e-0-manufacturing-comprehension-recon.md` (the pushed, immutable D9E-0
+artifact) was **not modified** — its original "21" remains there as historical evidence.
+
+**Recovery path used** (canonical, doctrine-supported, precedented — not a manually forged
+transition): `bash scripts/state-manager.sh reset d9e-1-canonical-manufacturing-comprehension-model`
+→ `RECON_READY`; corrected the spec's count references and AC-4 with an explicit erratum; re-ran
+`bash scripts/compile-spec.sh` (re-validated `RECON_READY → SPEC_LOCKED`, delegated to
+`generate-tasks.sh`, which `SKIP`ped regenerating the already-existing task file — per its own
+documented behavior — preserving all already-authored content, advancing to `TASK_GRAPH_LOCKED`);
+corrected the task file's own count references directly (same file, not regenerated); re-ran the
+pre-execution invariant gate; re-advanced to `EXECUTION_ACTIVE`; resumed. This exact reset-and-
+recompile mechanism is already precedented in this repository — see the D9C-5 journal addendum,
+"Incident — Spec Re-Triggered the D9C-1 Verification-Scripts Parser Bug."
+
+### Canonical Document Created
+
+`docs/manufacturing-comprehension-model.md` (22 directive-required sections; status `CANONICAL —
+OPERATOR_LOCKED THROUGH D9E-0; IMPLEMENTED BY D9E-1`): complete 14-stage model with the full
+per-stage schema; the three-gate model (Stage 9/10/11, Stage-9 typing corrected); the corrected
+22-entry failure-mode catalog with stable comprehension identifiers, raw-backend-code mapping
+(preserved, never replacing the real codes — including the two documented context-dependent/
+many-to-one cases), and a `DOCUMENTED_VS_IMPLEMENTED`-family classification per entry; the recovery-
+path catalog; the operator-locked actor/role/authority model (Technician = role not tier; QC
+distinct from Supervisor/Manager; the Floor-Manager-vs-Manager Scrap presentation rule); the
+operator-locked composable three-axis semantic model with the locked Stage-12 worked example
+reproduced verbatim; the complete serialized-traceability chain; the demo-availability ceiling (3 of
+9 flowchart scenario families fully demonstrable in the actor-first variants); the full
+data-availability boundary map; all 12 D9E-0 TBDs carried forward with explicit dispositions; and a
+downstream consumption contract binding D9E-2 through D9E-7 to this document.
+
+### Documentation Errata Applied
+
+- `docs/factory-flow-model.md`: Stage 9 retyped `factory core` → `gate` (Gate 1 of 3); Authority
+  Levels table corrected (Technician folded to a role under Operator tier, not a fourth tier; QC
+  sign-off attribution corrected off "Supervisor" to its own distinct row); the phantom Stage-8
+  "Cloud provision failure → Supervisor" hard-stop row removed and replaced with an explicit errata
+  note citing the C3 resolution. Cross-reference to the new canonical document added.
+- `docs/demo-walkthrough-d8.md`: Step 2 (Stage 7) and Step 6 (Stage 12) talking points corrected —
+  removed "the supervisor clears the block" in both places; replaced with the operator-locked
+  narrative (Stage 7: no floor-owned action, no current recovery endpoint; Stage 12: Retry is a
+  re-check after connectivity returns, not an override, no special authority required).
+- `docs/glossary.md` (new, additive): 15 UI-facing comprehension terms, explicitly distinct from
+  and non-contradicting the frozen `docs/domain-glossary.md`.
+
+### Failure/Recovery/Authority/Semantic-Model Results
+
+22 failure entries (corrected from D9E-0's originally-reported 21); complete recovery-path catalog
+(19 rows) classified by kind and current executability; actor/role/authority distinctions preserved
+exactly per operator lock; QC-distinctness preserved (only the QC Inspector role signs off — neither
+Supervisor nor Manager authority implies it); three composable semantic axes present and mapped
+against every failure entry, including the locked Stage-12 example verbatim; complete serialized-
+traceability chain documented without weakening traceability; zero product capability added.
+
+### Protected Surfaces Confirmed Untouched
+
+`frontend/`, `backend/`, `data/`, `source-materials/`, `vendor/`, `.engineering-os/`, Docker/
+compose/package/lock files, `scripts/verification/001`–`016`, all existing D9A–D9E-0 recon/spec/
+task artifacts, `ai/product-invariants.md`, `ai/runtime-contracts.md`, `ai/service-boundaries.md`,
+`ai/coding-patterns.md`, `ai/repo-index.md`, `AGENTS.md`, `ai/recon/d9c2-shared-view-model.md` — all
+confirmed byte-unchanged via `git status`/`git diff` and via `scripts/verification/017`'s own V18/
+V20/V21 checks.
+
+### Verification Results (real counts, freshly measured — not carried over from any prior session)
+
+`scripts/verification/017-d9e-1-canonical-manufacturing-comprehension-model.sh` (orchestrator-
+authored; first draft had 3 self-inflicted check-scoping bugs — V4 matched the errata prose instead
+of an active table row, V14's FM-WRONG-STAGE/FM-AUTH-INSUFFICIENT counts were unscoped and picked up
+their legitimate second appearance in the separate §7 raw-code-mapping table — all three fixed
+before relying on it, consistent with this session's standing "verify the check against the actual
+protected content before trusting a FAIL" practice): **39/39 PASS** on the corrected run.
+
+Full `001`–`017` corpus run manually, individually, each invoked as `bash "$script" < /dev/null` in
+a plain shell loop (per the standing `ai/incidents/d9c5-execution-supervisor-stdin-truncated-
+verification-loop.md` mitigation — proving scripts after `007` genuinely executed, not merely
+reported by count):
+
+```
+001=4/4        007=17/17      013=23/23
+002=4/4        008=17/17      014=31/31
+003=2/2        009=18/18      015=34/34
+004=10/10      010=21/21      016=63/63
+005=26/26      011=32/32 (+1 SKIP, documented env-limited)
+006=12/12      012=8/8        017=39/39
+```
+
+All 17 scripts, all exit 0. `bash scripts/invariant-check.sh` — 6/6 PASS, run before execution,
+after the AC-4 reset/recompile, and after final verification.
+
+### Docker/Runtime Note
+
+The Docker Compose stack (backend/frontend/postgres) was already running when this capability
+began (confirmed via read-only `docker compose ps`/`curl`, uptime ~2 hours predating this session's
+own actions) — it was not started, stopped, rebuilt, or otherwise mutated by this capability, per
+the directive's explicit Docker-state prohibition.
+
+### Unresolved Risks
+
+Every risk this document itself catalogues as unresolved (T1–T12 TBD register; D-1 through D-10
+implementation-defect register, dispositioned but not fixed — D-1/D-2/D-5/D-6/D-7/D-8/D-10 assigned
+to D9E-2, D-3/D-4/D-9 otherwise dispositioned) remains exactly as D9E-0 found it. No new risk was
+introduced. The layer/task-count deviation (a single generated task rather than the directive's
+"recommended" two) is recorded as an accepted, doctrine-consistent deviation, not a defect.
+
+### D9E-2 Handoff
+
+Next serialized node: **D9E-2 — Manufacturing Truth and Presentation Hardening**, scoped to the
+D-1/D-2/D-5/D-6/D-7/D-8/D-10 defect set and the C4/C5 narrative/authority-labeling corrections —
+not executed by this capability.
+
+---
+
+## D9E-1 Addendum — Pre-Push Review Remediation
+
+**Date:** 2026-07-14 (same session, bounded correction — not D9E-2)
+
+The operator's independent review of the unpushed D9E-1 commit found four acceptance defects, all
+corrected in place without touching state (`RELEASE_APPROVED` throughout) or pushing:
+
+1. **§6 malformed rows**: `FM-WRONG-STAGE` and `FM-AUTH-INSUFFICIENT` were missing their
+   `Persistence` table column (a shape defect introduced while splitting the originally-merged row
+   during the AC-4 correction). Both rows corrected to carry all 5 required columns, with the
+   operator's exact specified substance (each Transient/request-scoped, `IMPLEMENTED_AND_REACHABLE`,
+   with corrected semantic-axis phrasing distinguishing workflow-position failure from
+   authorization failure). 22-entry count preserved.
+2. **Glossary "No override" truth**: removed the unsupported "the canonical model's two no-override
+   conditions" exhaustive-count claim; replaced with a definition stating no-override blocks bypass
+   but does not categorically prohibit recovery/retry/re-check once the prerequisite resolves, with
+   three evidence-backed examples (Stage 10 ref-standard, Stage 7 cloud block — no recovery action
+   exists, Stage 12 cloud backup — Retry is a real, working re-check).
+3. **Glossary "Retry" truth**: removed the blanket "no retry, of any kind, is permitted" claim (only
+   true for Stage 7's absent recovery action, not a general no-override property); corrected to
+   state retry is not an override and may follow a no-override condition once its prerequisite is
+   met.
+4. **`docs/factory-flow-model.md` authority truth**: Supervisor's "clear hard-stops" permission
+   (overbroad — implied bypassing no-override conditions) corrected to "resolve Supervisor-
+   actionable conditions... cannot bypass no-override conditions"; the blanket "Authority is
+   enforced by the backend" statement corrected with an errata note naming exactly which actions
+   backend authority-checks (reallocation, calibration disposition, QC sign-off, SoD waiver) and
+   which do not (scan, hardware gate, calibration attempt, cloud backup, package, ship, transition),
+   cross-referencing the canonical model's §10 Authority-to-Action Matrix.
+5. **Verification script executable bit**: `scripts/verification/017-*.sh` was missing its
+   executable bit (created via the `Write` tool, which does not set `+x`) — set via `chmod +x`.
+
+`scripts/verification/017-*.sh` itself was extended with 5 new checks (V22–V26) asserting all four
+content corrections plus its own executable bit. First run of the updated script found 3
+self-inflicted check bugs (V14's match strings were stale against the newly-reshaped rows; V23's
+check assumed a single-line phrase that actually wraps across two lines in the .md source) — all
+three fixed before trusting the result, consistent with this session's standing "verify the check
+against the actual file before trusting a FAIL" discipline. Final: **52/52 PASS**.
+
+Full `001`–`017` corpus re-run individually (`< /dev/null`, per the standing stdin-drain
+mitigation): all 17 exit 0, identical counts to the initial D9E-1 run except `017` (39→52, reflecting
+the 5 new checks) — zero regression. `bash scripts/invariant-check.sh` — 6/6 PASS. State
+deliberately left at `RELEASE_APPROVED` throughout (not reset, not re-advanced — this was a content
+correction to already-approved artifacts, not a new execution cycle). Not pushed.
+
+**Files changed:** `docs/manufacturing-comprehension-model.md`, `docs/glossary.md`,
+`docs/factory-flow-model.md`, `scripts/verification/017-d9e-1-canonical-manufacturing-
+comprehension-model.sh`, this journal entry. No other file touched — confirmed via `git status`.
+
+---
+
+## D9E-1 Addendum V2 — Pre-Push Review Remediation: Verification Integrity and Recovery-Catalog
+## Completeness
+
+**Date:** 2026-07-14
+**Capability:** `d9e-1-canonical-manufacturing-comprehension-model` (unchanged; still a bounded
+correction of the same unpushed commit — not D9E-2)
+**Status:** `RELEASE_APPROVED` (unchanged throughout)
+
+### Summary
+
+A second independent review of the unpushed D9E-1 commit (`/tmp/d9e1-commit-review-v2.patch`) found
+that the substantive manufacturing corrections from Addendum V1 were sound, but `scripts/
+verification/017-*.sh` overstated what it mechanically proved, and §9 of the canonical model still
+omitted two recovery paths that §6 already recognized as distinct. Four findings, all remediated:
+
+1. **§9 Recovery-Path Catalog incompleteness**: §9 claimed to catalog "every evidence-backed
+   recovery path" but had no entry for `FM-WRONG-STAGE` or `FM-AUTH-INSUFFICIENT`, contradicting
+   §6's own claim that the two have distinct recovery paths. Before writing the fix, re-read the
+   actual backend implementation (`backend/app/workflow_rules.py`) to confirm audit behavior rather
+   than inventing it:
+   - Every `wrong_stage` response (all seven dedicated actions — `scan_part`, `record_hardware_
+     gate`, `record_calibration`, `qc_signoff`, `record_cloud_backup`, `package_unit`, `ship_unit`)
+     is returned via `_blocked_response()` with no `event_id` argument — confirmed no audit event is
+     ever emitted for a wrong-stage rejection (lines 118-121, 345-348, 400-403, 633-636, 735-738,
+     846-849, 878-881).
+   - `reallocate_part`'s insufficient-authority path returns HTTP 200/`status:"failed"` directly,
+     with no `_make_event`/`append_event` call (lines 220-230) — no audit event. The
+     `disposition_authority`/`can_qc_signoff`/`can_waive_separation_of_duty` paths all `raise
+     HTTPException(403, ...)` before any event is constructed (lines 547-563, 639-646, 685-689) —
+     also no audit event.
+   No backend evidence contradicted the existing canonical text, so no operator conflict was raised.
+   Added two new §9 rows with this evidence: **FM-WRONG-STAGE correction** (request correction /
+   retry; same actor, action valid for the unit's actual stage; unit unchanged by the rejection;
+   audit: none for the rejected request itself, the corrected action's own event applies once
+   performed) and **FM-AUTH-INSUFFICIENT handoff** (authorized-actor handoff / approval; authority
+   required depends on the specific action — Supervisor for reallocation, Supervisor/Manager per
+   `disposition_authority` for calibration disposition, QC Authority for QC sign-off, Manager for SoD
+   waiver — explicitly **not** uniformly Manager; unit unchanged by the denial; audit: none for the
+   denied request itself, the eventual successful action's own event applies). A closing
+   "Completeness confirmation" sentence now ties §9 back to §6's full canonical-ID set.
+
+2. **V2 proved presence only, not order**: the prior check computed an unused `STAGE_ORDER`
+   variable and then looped checking each `S-NN` token appeared *somewhere* in the document — it
+   would have passed even if the Stage Model table were reordered. Rewritten to extract stage IDs
+   only from the `## 4. Fourteen-Stage Model` summary table (bounded before `### Per-stage detail`),
+   preserve source order via `awk`/`grep -oE`, and require an exact string match against
+   `STAGE-01 STAGE-02 ... STAGE-14`. Mutation-tested against a temp copy with a corrupted stage ID
+   (`STAGE-09`→`STAGE-99`) to confirm the check produces a non-matching sequence before trusting it.
+
+3. **V15 proved triggers only, not recoveries**: the prior check asserted the wrong-stage and
+   insufficient-authority *trigger* language existed somewhere in the canonical document, but never
+   asserted either *recovery*. Rewritten into four independent sub-checks (V15.1–V15.4): trigger and
+   recovery for each of `FM-WRONG-STAGE` and `FM-AUTH-INSUFFICIENT`, with triggers scoped to §6 (the
+   `## 6. Failure-Mode Catalog` through its Count-confirmation prose) and recoveries scoped to §9
+   (the `## 9. Recovery-Path Catalog` section specifically) via `awk` range extraction — not
+   unrelated prose elsewhere. Mutation-tested by deleting the new `FM-WRONG-STAGE correction` row
+   from a temp copy and confirming V15.2's logic would then fail.
+
+4. **V22 proved a fixed prefix, not full row structure**: the prior check was three `grep -qF`
+   prefix matches that stopped at the classification column — it would pass even if the trailing
+   semantic-expression cell were dropped or emptied. Rewritten to structurally parse every `| FM-`
+   row inside the bounded §6 catalog range with `awk -F'|'`, requiring exactly 7 fields (leading/
+   trailing empty + 5 populated logical columns: Canonical ID / Stage / Persistence /
+   Classification / Semantic axes) and every one of the 5 populated fields non-empty after
+   trimming. Six independent sub-checks (V22.1–V22.6): exact 22-row count, zero malformed rows,
+   `FM-WRONG-STAGE` and `FM-AUTH-INSUFFICIENT` each appearing exactly once, and both retaining their
+   specific required Persistence/Semantic-expression substrings. Mutation-tested by emptying the
+   `FM-WRONG-STAGE` row's semantic-expression cell in a temp copy and confirming the structural
+   parse reports `BAD=1` before trusting the real result.
+
+No verifier bugs were found this round on first run — all rewritten checks passed against the real
+files on the first execution (unlike Addendum V1's two rounds of self-inflicted script bugs). Each
+rewritten check was still mutation-tested against a throwaway temp copy (never the tracked file)
+before being trusted, per this round's own quality-rule requirement not to report a pass until the
+check has been shown to actually test the claimed property.
+
+### Verification
+
+`bash scripts/verification/017-*.sh`: **57/57 PASS** (up from 52 — 5 new/expanded assertions:
+V15 split 2→4 sub-checks, +2; V22 split 3→6 sub-checks, +3).
+
+Full `001`–`017` corpus re-run individually (`< /dev/null`, per the standing stdin-drain
+mitigation): all 17 exit 0 — `001`=4, `002`=4, `003`=2, `004`=10, `005`=26, `006`=12, `007`=17,
+`008`=17, `009`=18, `010`=21, `011`=32 PASS/1 SKIP, `012`=8, `013`=23, `014`=31, `015`=34, `016`=63,
+`017`=57 — identical to the Addendum V1 run except `017` (52→57), confirming scripts after `007`
+executed and zero regression. `bash scripts/invariant-check.sh` — 6/6 PASS.
+
+State confirmed unchanged at `RELEASE_APPROVED` throughout (never reset, never re-advanced). D9E-2
+was not started. Nothing was pushed — `git status -sb` confirms `main...origin/main [ahead 1]`
+before and after this remediation.
+
+**Diff scope confirmed before any staging:** `git diff --name-only` showed exactly
+`docs/manufacturing-comprehension-model.md` and `scripts/verification/017-d9e-1-canonical-
+manufacturing-comprehension-model.sh` as modified (plus this journal entry, added in this same
+edit pass) — no other tracked file changed. The two pre-existing untracked residue files (`AGENTS.
+md`, `ai/recon/d9c2-shared-view-model.md`) remain untouched.
+
+**Files changed:** `docs/manufacturing-comprehension-model.md`, `scripts/verification/017-d9e-1-
+canonical-manufacturing-comprehension-model.sh`, this journal entry. No other file touched.
+
+---
+
+## D9E-1 Addendum V3 — Pre-Push Review Remediation: Classification and Structural Verification
+
+**Date:** 2026-07-14
+**Capability:** `d9e-1-canonical-manufacturing-comprehension-model` (unchanged; still a bounded
+correction of the same unpushed commit — not D9E-2)
+**Status:** `RELEASE_APPROVED` (unchanged throughout)
+
+### Summary
+
+A third independent review of the unpushed D9E-1 commit (`/tmp/d9e1-commit-review-v3.patch`)
+confirmed all prior remediation held — V2/V15/V22 structural proofs, the §9 recovery additions, and
+the executable bit were all sound — and surfaced four further findings, all remediated:
+
+1. **Classification contradicts persistence for two entries**: §6 classified both `FM-WRONG-STAGE`
+   and `FM-AUTH-INSUFFICIENT` as `IMPLEMENTED_AND_REACHABLE`, but their own Persistence column reads
+   "Transient — request-scoped; unit unchanged" and the backend evidence already established in
+   Addendum V2 (no audit event emitted for either rejection) matches §8's `IMPLEMENTED_TRANSIENT_
+   ONLY` definition exactly ("never persists to the unit record... only visible in the response of
+   the specific call that triggered it"), not `IMPLEMENTED_AND_REACHABLE`'s durability requirement.
+   Corrected both classification cells to `IMPLEMENTED_TRANSIENT_ONLY`. This is a consistency
+   correction against already-established evidence, not a new manufacturing finding — no other
+   classification was touched, and no conflicting evidence was found that would have required
+   halting to report a new conflict.
+
+2. **Stale unqualified count in the active task**: `tasks/d9e-1-canonical-manufacturing-
+   comprehension-model-001.md` still read "§11 twenty-one-entry failure catalog," contradicting its
+   own later 22-entry acceptance criteria. Corrected to "§11 22-entry failure catalog (originally
+   misreported as 21 in D9E-0 prose)." Task status left at `done`, untouched.
+
+3. **V3 declared the gate set but never proved exclusivity**: the prior check only grepped for the
+   "Gate 1 = Stage 9" / "Gate 2 = Stage 10" / "Gate 3 = Stage 11" declaration sentences — a document
+   with those three sentences present plus an extra, incorrectly gated Stage 8 row would still have
+   passed. Added V3.3: a structural `awk` extraction of every `STAGE-NN` row's "Gate?" cell from the
+   §4 summary table, in table order, compared by exact string equality against `STAGE-09 STAGE-10
+   STAGE-11` only. Mutation-tested against a temp copy (outside the repo, in `/tmp/`, removed
+   immediately after) with Stage 8 (re)marked `**Yes — Gate 0**` — confirmed the extracted set
+   became `STAGE-08 STAGE-09 STAGE-10 STAGE-11` and the exact-match comparison correctly failed.
+
+4. **V1 proved file existence and a status line, never the 22-section structure**: added V1.3, a
+   structural extraction of top-level `## N. ` headings only (the `^## ` anchor's third-character-
+   must-be-space requirement excludes `### ` subsections; no numbered-list or in-prose section
+   references match this anchor either), compared by exact sequence against `1` through `22`.
+   Mutation-tested against a temp copy with the §12 heading deleted — confirmed the extracted
+   sequence skipped from 11 to 13 and the comparison correctly failed.
+
+**V22 classification allow-list enforcement:** extended V22's existing structural `awk` parse with
+a closed 8-value set (`IMPLEMENTED_AND_REACHABLE`, `IMPLEMENTED_SEEDED_ONLY`, `IMPLEMENTED_
+TRANSIENT_ONLY`, `IMPLEMENTED_BUT_UI_UNAVAILABLE`, `DOCUMENTED_NOT_IMPLEMENTED`, `DOCUMENTED_
+CONFLICT_RESOLVED_OUT`, `DATA_UNAVAILABLE`, `TBD`) via an awk associative-array membership test.
+Three new sub-checks: V22.7 (every one of the 22 rows carries exactly one recognized value after
+stripping backticks/whitespace — catches empty, unknown, misspelled, or multi-value cells), V22.8
+and V22.9 (explicit assertions that `FM-WRONG-STAGE` and `FM-AUTH-INSUFFICIENT` are specifically
+`IMPLEMENTED_TRANSIENT_ONLY`, not merely "some valid value"). Mutation-tested against a temp copy
+with `FM-WRONG-STAGE`'s classification corrupted to `NOT_A_REAL_VALUE` — confirmed `BAD_CLS=1` was
+correctly detected.
+
+**V17 extended** (from the V2 remediation, unchanged in that round but now also covering the task):
+added a positive check that the task carries the corrected "22-entry failure catalog" wording, and
+a negative check that none of the stale unqualified forms (`twenty-one-entry failure catalog`,
+`21-entry failure catalog`, `21 evidence-backed failure`, `All 21`) remain in the task. Verified the
+task's own legitimate historical-erratum sentences (e.g. "D9E-0 originally reported 21 (a counting
+error)") do not match any of the banned exact phrases, so the negative check does not false-positive
+on honest historical narration.
+
+All mutation tests for V1, V3, and V22 were run against throwaway copies in `/tmp/`, never against
+the tracked canonical document, and the temp directory was removed immediately after each test —
+confirmed via `git status --short` showing no residue from the testing process.
+
+### Verification
+
+`bash scripts/verification/017-*.sh`: **64/64 PASS** (up from 57 — V1 split 2→3 sub-checks +1, V3
+split 2→3 sub-checks +1, V17 +2 new task-specific assertions, V22 split 6→9 sub-checks +3).
+
+Full `001`–`017` corpus re-run individually (`< /dev/null`, per the standing stdin-drain
+mitigation): all 17 exit 0 — `001`=4, `002`=4, `003`=2, `004`=10, `005`=26, `006`=12, `007`=17,
+`008`=17, `009`=18, `010`=21, `011`=32 PASS/1 SKIP, `012`=8, `013`=23, `014`=31, `015`=34, `016`=63,
+`017`=64 — identical to the Addendum V2 run except `017` (57→64), confirming scripts after `007`
+executed and zero regression. `bash scripts/invariant-check.sh` — 6/6 PASS.
+
+State confirmed unchanged at `RELEASE_APPROVED` throughout (never reset, never re-advanced),
+verified directly against `ai/state_registry.json` rather than relying solely on `state-manager.sh
+get`'s auto-registration-on-unknown-key default. D9E-2 has no entry in the registry and was not
+started. Nothing was pushed — `main...origin/main [ahead 1]` before and after this remediation.
+
+**Files changed:** `docs/manufacturing-comprehension-model.md`, `tasks/d9e-1-canonical-
+manufacturing-comprehension-model-001.md`, `scripts/verification/017-d9e-1-canonical-manufacturing-
+comprehension-model.sh`, this journal entry. No other file touched — confirmed via `git diff
+--name-only` before staging. The two pre-existing untracked residue files remain untouched.

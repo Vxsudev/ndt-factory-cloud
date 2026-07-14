@@ -106,7 +106,10 @@ Action Panel shows no available action (cloud dependency — cannot proceed unti
 - "Stage 7 requires a cloud connection to sync device firmware. In this demo, cloud is mocked as unavailable."
 - "The hard-stop has NO OVERRIDE. There is no way to bypass this in the system."
 - "The backend enforces this — the UI cannot override it. Attempting any action returns a 200 BLOCKED response, not an error."
-- "In production, resolving this requires the cloud service to become available, then a supervisor clears the block."
+- "Resolution is a re-check once the cloud service becomes available again — not a Supervisor
+  override. There is no floor-owned action for this block today: the current prototype has no
+  recovery endpoint for Stage 7, so once cloud connectivity is restored the unit still requires a
+  future re-check capability to proceed (see `docs/manufacturing-comprehension-model.md`)."
 
 ---
 
@@ -226,7 +229,9 @@ QC Summary: signed_off by USER-QC-0001 ✓
 **Talking points:**
 - "Stage 12 backs up the full production record to cloud. Cloud is mocked as unavailable."
 - "Like Stage 7, this has NO OVERRIDE — the production record cannot be marked complete without the backup."
-- "In production, once cloud connectivity is restored, the supervisor clears the block and backup proceeds."
+- "Once cloud connectivity is restored, Retry Cloud Backup performs a re-check — this is not a
+  Supervisor override and requires no special authority; any actor may submit it once the cloud
+  is reachable again (see `docs/manufacturing-comprehension-model.md`)."
 
 ---
 

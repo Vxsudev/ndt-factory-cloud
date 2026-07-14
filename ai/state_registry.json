@@ -46,5 +46,9 @@
   "d9d-cross-variant-parity": {
     "state": "RELEASE_APPROVED",
     "updated_at": "2026-07-13T11:25:58Z"
+  },
+  "d9e-1-canonical-manufacturing-comprehension-model": {
+    "state": "RELEASE_APPROVED",
+    "updated_at": "2026-07-14T12:28:42Z"
   }
 }

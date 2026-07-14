@@ -4,8 +4,14 @@
 stage definitions, transition rules, and control gates. Backend stage machine logic,
 frontend progress display, and verification tests must all reference this model.
 
-**Status:** FROZEN (D2A — drift-corrected 2026-06-30)
+**Status:** FROZEN (D2A — drift-corrected 2026-06-30; gate/authority errata applied D9E-1 2026-07-14)
 **Canonical model version:** v1
+
+**Comprehension cross-reference:** for plain-language stage/failure/recovery/authority explanations
+built on this frozen model, see `docs/manufacturing-comprehension-model.md` (canonical,
+operator-locked through D9E-0, implemented D9E-1). This document remains the sole authoritative
+source for stage definitions, transition rules, and control gates; the comprehension model
+consumes it and must not contradict it.
 
 ---
 
@@ -38,9 +44,9 @@ prohibited.
 | S-06  | Software / Firmware Installed         | factory core  | Technician              | Factory-baseline software/firmware flashed to device |
 | S-07  | Software / Firmware Updated from Cloud | factory core | System / Technician     | Device syncs to current production firmware version from cloud |
 | S-08  | Device Provisioned with Cloud         | factory core  | System                  | Cloud device identity and credentials provisioned; pushed to device |
-| S-09  | Hardware Checks / Setup               | factory core  | Technician              | Physical and electrical checks; hardware setup confirmed |
-| S-10  | Calibration                           | gate          | Technician              | Calibration performed with reference standard; max 3 attempts |
-| S-11  | Quality Control                       | gate          | QC Inspector / Supervisor | Final human sign-off; verifies physical unit and digital record |
+| S-09  | Hardware Checks / Setup               | gate          | Technician              | Physical and electrical checks; hardware setup confirmed (Gate 1 of 3 — errata D9E-1: previously mistyped `factory core`) |
+| S-10  | Calibration                           | gate          | Technician              | Calibration performed with reference standard; max 3 attempts (Gate 2 of 3) |
+| S-11  | Quality Control                       | gate          | QC Inspector            | Final human sign-off; verifies physical unit and digital record (Gate 3 of 3) |
 | S-12  | Factory Data Backup to Cloud          | factory core  | System                  | Full production record backed up to cloud; confirms device reachability |
 | S-13  | Package                               | factory core  | Operator                | Device packaged for shipment                   |
 | S-14  | Ship                                  | terminal      | Operator / Manager      | Device shipped; all production records immutable |
@@ -69,10 +75,17 @@ Hard-stop conditions:
 |--------------------------------------------|-------------------|------------------------|
 | Missing required part scan (S-05)          | System            | Operator               |
 | Calibration reference standard invalid or expired (S-10) | System | Supervisor (no override — hard block) |
-| Calibration failed 3 times (S-10)          | System            | Supervisor             |
-| QC inspection failure / sign-off withheld (S-11) | Supervisor   | Manager                |
-| Cloud provision failure (S-08)             | System            | Supervisor             |
-| Cloud backup failure (S-12)                | System            | Supervisor             |
+| Calibration failed 3 times (S-10)          | System            | Supervisor (route back / quarantine) or Manager (scrap) |
+| QC inspection failure / sign-off withheld (S-11) | QC Authority | Manager                |
+| Cloud SW/FW update unreachable (S-07)       | System            | No override — no floor-owned recovery action exists in the current implementation; recovery is conceptual (re-check once cloud returns) |
+| Cloud backup failure (S-12)                | System            | No override — recovery is a re-check once connectivity returns, not a Supervisor override |
+
+**Errata (D9E-1):** the "Cloud provision failure (S-08) → Supervisor" row previously listed here
+had no support in the Business Requirements Specification, the Digital Factory Flowchart,
+`data/stages.json`, or `backend/app/workflow_rules.py` — no Stage-8 failure exists anywhere in the
+canonical model or the implementation. It has been removed as non-canonical (D9E-0 §25 C3,
+operator-resolved). Do not reintroduce a Stage-8 failure without a new, explicit model-update
+directive per Product Invariant 1.
 
 ---
 
@@ -171,15 +184,28 @@ Supervisor/manager disposition outcomes: `rework` (returns to appropriate earlie
 
 ## Authority Levels
 
-| Level      | Role               | Permissions                                                  |
-|------------|--------------------|--------------------------------------------------------------|
-| Operator   | Factory floor      | Advance S-03–S-05, S-13; scan parts; package                |
-| Technician | Factory technician | Advance S-06–S-10; firmware install; hardware checks; calibration |
-| Supervisor | Line supervisor    | QC sign-off (S-11); clear hard-stops; disposition calibration and QC failures |
-| Manager    | Factory manager    | Override rework limits; authorize S-14 (Ship); escalate dispositions |
+**Errata (D9E-1, operator-resolved D9E-0 §25 C2):** authority tier and operational role are distinct
+concepts. "Technician" is an **operational role** performed under Operator-tier authority — not a
+fourth authority tier — and QC sign-off is a **distinct named authority**, never a Supervisor
+permission. The table below corrects both points; no stage range, permission, or enforcement
+behavior changes.
 
-Authority is enforced by the backend. The frontend indicates authority gating; enforcement
-lives in the API layer.
+| Level        | Example roles                                                      | Permissions                                                  |
+|--------------|---------------------------------------------------------------------|--------------------------------------------------------------|
+| Operator     | Assembler; Technician / Calibration Technician; Inventory Operator   | Advance S-03–S-10, S-13; scan parts; install firmware; run hardware checks; perform calibration attempts; package |
+| Supervisor   | Line supervisor / Floor Manager                                      | Resolve Supervisor-actionable conditions, including reallocation, route-back, and quarantine; cannot bypass no-override conditions |
+| QC Authority | QC Inspector                                                         | Sign off Quality Control (S-11) — a distinct named authority, not a Supervisor permission |
+| Manager      | Factory manager                                                      | Authorize scrap (calibration disposition); waive QC separation-of-duty; authorize S-14 (Ship); escalate dispositions |
+
+**Errata (D9E-1, pre-push review):** the backend enforces authority specifically for part
+reallocation (`can_override`), calibration disposition (`disposition_authority`), QC sign-off
+(`can_qc_signoff`), and the QC separation-of-duty waiver (`can_waive_separation_of_duty`). Several
+other prototype actions (assembly scan, hardware gate, calibration attempt, cloud backup, package,
+ship, and the generic transition action) do **not** currently enforce actor authority in the
+backend — any caller may invoke them regardless of role. The complete, evidence-backed
+implementation-status and authority-enforcement detail is documented in
+`docs/manufacturing-comprehension-model.md` §10 (Authority-to-Action Matrix). Frontend wording must
+never imply an enforcement guarantee that does not exist for these unenforced actions.
 
 ---
 
