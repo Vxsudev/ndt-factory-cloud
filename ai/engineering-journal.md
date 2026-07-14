@@ -2515,3 +2515,228 @@ sentence could name it — recording it here is a snapshot of the amend that jus
 happened, not a fixed point; if this entry is amended again in the future, the SHA
 recorded here will describe that prior state, not the new one.) Not pushed — `main`
 remains exactly one commit ahead of `origin/main`.
+
+---
+
+### 2026-07-13
+
+### Feature
+
+d9d-cross-variant-parity
+
+### Phase
+
+phase-ui
+
+### Spec
+
+specs/d9d-cross-variant-parity.md
+
+### Tasks
+
+
+- tasks/d9d-cross-variant-parity-001.md [frontend]
+- tasks/d9d-cross-variant-parity-002.md [verification]
+
+### Implementation Notes
+
+Executed by execution-supervisor.sh at 2026-07-13T11:25:58Z.
+All 2 tasks completed. Verification passed.
+
+### Pattern Updates
+
+None.
+
+### Incidents
+
+None.
+
+---
+
+### 2026-07-13 (addendum — orchestrator-performed cross-variant parity audit and independent verification)
+
+### Feature
+
+d9d-cross-variant-parity
+
+### Capability
+
+Audited Current, Attention-First, Workflow-First, and Command-Center against one
+canonical factory truth (`ai/recon/d9d-cross-variant-parity.md`, 23-dimension parity
+matrix) to confirm the three actor-first variants differ only by their intentionally
+designed presentation/interaction philosophy, never by accidental data, API, state,
+action, refresh, error-handling, or authority drift.
+
+### Findings (recon)
+
+Of 23 audited dimensions: 21 `CANONICAL_PARITY` or protected
+`INTENTIONAL_PRESENTATION_DIFFERENCE`/`INTENTIONAL_INTERACTION_DIFFERENCE`, exactly 2
+`DEFECTIVE_DRIFT`:
+
+1. `AssemblerWorkflowView.tsx` and `AssemblerCommandView.tsx` never rendered their
+   `*ActionForm` outside the `isBlocked` block, so the backend-supported stage-10
+   calibration-submission action (reachable in Attention-First's calm state) was
+   silently absent from the other two variants — a real action-eligibility parity
+   gap and a deviation from each variant's own D9B-documented "always-visible primary
+   action" design intent.
+2. None of the three `*ActionForm.tsx` files validated that the Stage-5 replacement
+   serial number was non-empty before allowing submission.
+
+No `Conflict: STOP` — both items fell within the directive's own allowed-correction
+categories (mismatched action eligibility / mismatched mutation payload validation),
+neither requiring a backend/API/data-model change, an actor-authority change, or a
+choice between design philosophies.
+
+### Corrections Applied
+
+- `AssemblerWorkflowView.tsx` / `AssemblerCommandView.tsx`: added a sibling
+  `{!isBlocked && <XxxActionForm .../>}` block immediately after the existing
+  `{isBlocked && (...)}` block — additive only, no ternary introduced, existing
+  blocked-state content byte-identical.
+- `AttentionActionForm.tsx` / `WorkflowActionForm.tsx` / `CommandCenterActionForm.tsx`:
+  `SubmitButton` gained a `disabled?: boolean` prop (default `false`, combined as
+  `disabled={loading || disabled}`); only the Stage-5 "Submit Reallocation" call site
+  passes `disabled={newSerial.trim().length === 0}`.
+
+Exactly 5 files changed, matching `tasks/d9d-cross-variant-parity-001.md` precisely;
+`git diff --stat` confirmed zero changes to any protected surface
+(`attention-first/{AssemblerView,FloorManagerView}.tsx`,
+`workflow-first/FloorManagerWorkflowView.tsx`,
+`command-center/FloorManagerCommandView.tsx`, `VariantReviewShell.tsx`,
+`FactoryFlowBoard.tsx`, `ActionPanel.tsx`, the shared view-model, `factoryApi.ts`,
+`types/factory.ts`, and everything under `backend/`, `data/`, `vendor/`,
+`.engineering-os/`).
+
+### Orchestrator-Authored Verification Script
+
+`scripts/verification/016-d9d-cross-variant-parity.sh` authored directly by the
+orchestrator (per
+`ai/incidents/d9c3-verification-script-deliverable-skipped-by-worker.md` —
+`scripts/` is never delegated to a headless worker). Covers 32 check groups (V1–V32):
+shared-hook single-invocation/no-parallel-fetch, unit-eligibility/terminal-filtering/
+initial-focus parity, attention-derivation parity, `hasSupportedAction` presence, the
+two corrections' presence, protected structural-difference preservation, payload/
+authority/refresh/error parity, and a no-visual-polish check.
+
+**Self-inflicted bug found and fixed before release**: the first draft of V10b and V11
+incorrectly asserted that `attention-first/AssemblerView.tsx` must contain **no**
+`isBlocked ?` ternary. That assertion was wrong — `AssemblerView.tsx` legitimately and
+intentionally *does* contain that ternary (it is the takeover structure protected
+since D9C-4); only `AssemblerWorkflowView.tsx`/`AssemblerCommandView.tsx` are
+constrained to introduce no *new* ternary. Corrected both checks in place (V10b now
+asserts the reference file's calm branch renders its action form inside the existing
+ternary's else arm; V11's "no new ternary" loop now covers only the two corrected
+files, plus a separate assertion that `AssemblerView.tsx`'s ternary remains present).
+Re-run after the fix: **63 PASS / 0 FAIL**, exit 0. This was a defect in the
+newly-authored verification script's own check logic, not in the application code,
+which was independently confirmed correct by direct diff review before the script was
+first run.
+
+### Independent Re-Verification (per the standing d9c5 stdin-drain mitigation)
+
+Ran the full `001`–`016` corpus manually, outside `execution-supervisor.sh`, each
+script invoked as `bash "$script" < /dev/null` in a plain shell loop with per-script
+exit code recorded explicitly (guarding against the confirmed stdin-drain defect that
+silently truncates the supervisor's own loop past script `007`):
+
+```
+001: exit 0 (4 PASS)        009: exit 0 (18 PASS)
+002: exit 0 (4 PASS)        010: exit 0 (21 PASS)
+003: exit 0 (2 PASS)        011: exit 0 (32 PASS / 1 SKIP)
+004: exit 0 (10 PASS)       012: exit 0 (8 PASS)
+005: exit 0 (26 PASS)       013: exit 0 (23 PASS)
+006: exit 0 (12 PASS)       014: exit 0 (31 PASS)
+007: exit 0 (17 PASS)       015: exit 0 (34 PASS)
+008: exit 0 (17 PASS)       016: exit 0 (63 PASS)
+```
+
+All 16 scripts confirmed to execute individually (not truncated at 007).
+`bash scripts/invariant-check.sh` — 6/6 PASS.
+
+### Rebuild and Served-Source Proof
+
+`docker compose build frontend && docker compose up -d --force-recreate frontend`,
+then `curl`'d the served bundle at `localhost:5173/src/.../*.tsx` for all five changed
+files and positively confirmed the transformed JSX contained both corrections
+(`!isBlocked && jsxDEV(WorkflowActionForm, ...)`,
+`!isBlocked && jsxDEV(CommandCenterActionForm, ...)`, and
+`disabled: newSerial.trim().length === 0` in all three `*ActionForm.tsx`) before any
+browser verification was performed.
+
+### Live Browser Verification (Playwright, against the rebuilt image)
+
+Demo state reset to canonical (`POST /factory/dev/reset-state`) before testing.
+
+- Confirmed UNIT-0003's (stage 10, not cap-exceeded) "Submit Calibration Result"
+  action now renders in the calm state of all three variants' Assembler view
+  (previously present only in Attention-First).
+- Equivalent action scenarios executed and cross-checked:
+  - Submitted UNIT-0003's calibration (Pass) from Command-Center → advanced to
+    stage 11 (Quality Control); confirmed identically reflected in Current (event
+    trace: "Calibration passed on attempt 3...") and in Attention-First (no longer
+    shows a calibration action, correctly ineligible at stage 11).
+  - Submitted UNIT-0006's cloud-backup retry from Workflow-First's inline blocked
+    section → unit unblocked, advanced to stage 13 (Package); confirmed identically
+    reflected in Command-Center (BLOCKED tag removed).
+  - Submitted UNIT-0004's calibration-cap disposition (Quarantine) from
+    Command-Center's Floor Manager (Assembler correctly deferred to Floor Manager
+    with "Needs floor manager approval..." — this action requires Floor Manager
+    authority in Command-Center) → `blocked_reason` updated to
+    `quarantined: Calibration cap exceeded — quarantining unit`, unit remained at
+    stage 10 per backend truth (`current_status: "quarantined"`); confirmed
+    identically reflected in Current's unit queue and event trace.
+- Confirmed UNIT-0002 (stage 7, unsupported action) still shows the truthful "No
+  resolution action is available in this comparison view." message in both
+  Attention-First's and Command-Center's Floor Manager triage — no dead "Resolve"
+  control anywhere.
+- Confirmed all intentional structural differences remained visually/behaviorally
+  intact throughout: Attention-First's full-bleed takeover replaces the calm card the
+  instant a unit is blocked, and its Floor Manager triage list renders unconditionally
+  (no toggle); Workflow-First's Floor Manager triage remained collapsed by default
+  ("3 need attention — tap to view"); Command-Center's Assembler rendered its
+  Attention banner / Current Unit / Other Units / collapsed Supporting Detail
+  simultaneously.
+- Demo state reset to canonical again after all testing;
+  `GET /factory/units` confirmed byte-for-byte match against the original seed values
+  (stage numbers, `blocked_reason`, `cap_exceeded`, `current_status` all reverted) —
+  zero mutation residue.
+
+### Confirmed Backend Truth (re-verified, not re-litigated)
+
+Stage-5 reallocation remains unreachable through the live running application under
+current seed data — `_scan_reject()`'s assembly hard-stops return only a transient
+per-call `blocked_reason`, never a persisted one; `unit["blocked_reason"]` is only ever
+durably set for stages 9, 10, and 12. This was already established in the D9C
+post-release remediation and reconfirmed, not retested, during this capability.
+
+### Pattern Updates
+
+Reinforces the standing verification-script-authorship lesson from D9C: even an
+orchestrator-authored script can encode an incorrect assumption about which file a
+structural-preservation rule applies to. Fix: verify the check's assertion against a
+direct read of the actual protected file's intentional structure before trusting a
+FAIL as evidence of an application defect — in this case, both failures were
+self-inflicted script bugs, confirmed via direct diff review before the fix was
+applied, not via blind re-running.
+
+### Incidents
+
+None new. Confirms `ai/incidents/d9c3-verification-script-deliverable-skipped-by-worker.md`
+and `ai/incidents/d9c5-execution-supervisor-stdin-truncated-verification-loop.md`
+remain the governing mitigations; both were followed without deviation.
+
+### Final State
+
+`ai/state_registry.json` — `d9d-cross-variant-parity`: `RELEASE_APPROVED`
+(set by execution-supervisor.sh at 2026-07-13T11:25:58Z, independently re-confirmed
+by this addendum's full manual verification corpus, rebuild/served-source proof, and
+live Playwright browser testing). No git commit has been made for D9D as of this
+entry — none was requested. Local `main` currently matches pushed `origin/main`
+exactly (at `87315eb52fe40f9c7318ffbccbba7b4e0191a8a7`); per the standing rule, any
+future D9D commit must be a **new** commit, not an amend, since amending now would
+rewrite already-shared history.
+
+### Next-Phase Handoff
+
+D9E (visual polish) is the next serialized node per
+`specs/d9d-cross-variant-parity.md` — not executed by this capability.

@@ -66,6 +66,14 @@ export function AssemblerCommandView({ vm }: Props) {
         </div>
         <div className="font-mono text-lg font-bold t-on-surface">{focused.id}</div>
         <div className="text-sm t-on-surface-var">{stageName}</div>
+        {!isBlocked && (
+          <CommandCenterActionForm
+            unit={focused}
+            parts={vm.parts}
+            refStandards={vm.refStandards}
+            onDone={() => void vm.refreshSelected()}
+          />
+        )}
       </div>
 
       <div>

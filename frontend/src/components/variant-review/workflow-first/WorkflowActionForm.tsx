@@ -47,11 +47,13 @@ function SubmitButton({
   loading,
   onClick,
   tone = 'primary',
+  disabled = false,
 }: {
   label: string
   loading: boolean
   onClick: () => void
   tone?: 'primary' | 'error'
+  disabled?: boolean
 }) {
   const toneCls =
     tone === 'error' ? 'surf-error t-on-error b-error border' : 'surf-primary t-on-primary'
@@ -59,7 +61,7 @@ function SubmitButton({
     <button
       type="button"
       onClick={onClick}
-      disabled={loading}
+      disabled={loading || disabled}
       className={`touch-target-primary inline-flex items-center justify-center px-4 rounded text-sm font-semibold w-full transition-colors disabled:opacity-50 ${toneCls}`}
     >
       {loading ? 'Submitting…' : label}
@@ -114,6 +116,7 @@ export function WorkflowActionForm({ unit, parts, refStandards, onDone }: Props)
         <SubmitButton
           label="Submit Reallocation"
           loading={loading}
+          disabled={newSerial.trim().length === 0}
           onClick={() =>
             submit(() =>
               postReallocatePart(unit.id, {

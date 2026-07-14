@@ -66,6 +66,15 @@ export function AssemblerWorkflowView({ vm }: Props) {
             )}
           </div>
         )}
+
+        {!isBlocked && (
+          <WorkflowActionForm
+            unit={focused}
+            parts={vm.parts}
+            refStandards={vm.refStandards}
+            onDone={() => void vm.refreshSelected()}
+          />
+        )}
       </div>
 
       {others.length > 0 && (
